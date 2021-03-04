@@ -9,16 +9,16 @@ import pandas as pd
 import os
 
 ## 
-# import all csv files to the Data bin then run
+### import all csv files to the Data bin then run
 
 data_path = os.getcwd() + '/Data'
 all_data_dict = {}
 all_data_list = []
-interested_retention = [15,19,20,22] #change this to the retention times you are interestsed in
+interested_retention = [15,19,20,22] ### change this to the retention times you are interestsed in
 counter = 0
 for j in os.listdir(data_path):
-    if j == '.DS_Store':
-            continue
+    if (j == '.DS_Store') or ('~$' in j):
+        continue
     sheet_path = data_path + '/' + str(j)
     series = pd.read_excel(sheet_path, sheet_name = 'Page 2', header = 6, index = False, index_col = None)
     series = series.loc[:,~series.columns.str.match('Unnamed')]
