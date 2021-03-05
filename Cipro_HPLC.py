@@ -8,19 +8,28 @@ Created on Thu Mar  4 10:38:10 2021
 import pandas as pd
 import os
 import math
+from xlrd import XLRDError
 
-## 
+
+##########################################  vv USER CHANGE vv  ##########################################
+
+
 ### import all csv files to the Data bin then run
+
+interested_retention = [8, 15,19,20,22] ### change this to the retention times you are interestsed in
+excel_page_num = 47 ## Change this number to the numer of pages there are in a single Excel sheet.
+                    ## If there are multiple sheets with varying page numbers, enter the max excel sheet 
+                    ## or a number that you think is high enough to capture all data
+                    ## You will receive a print message that tells you where the page number
+                    ## does not exist for a given excel sheet 
+
+
+######################################## vv USER DONT CHANGE vv  #########################################
 
 data_path = os.getcwd() + '/Data'
 all_data_dict = {}
 all_data_list = []
 counter = 0
-
-## Users change these 
-interested_retention = [15,19,20,22] ### change this to the retention times you are interestsed in
-excel_page_num = 46 ## Change the number of pages there are on a single excel file. If there are varying pages, run in batches
-                    ## by adding excel spreadsheets in the Data directory
 
 for j in os.listdir(data_path):
     if (j == '.DS_Store') or ('~$' in j):
@@ -32,40 +41,49 @@ for j in os.listdir(data_path):
     
     for k in range(1, excel_page_num+1):
         sheetname = 'Page ' + str(k)
-        series = pd.read_excel(sheet_path, sheet_name = sheetname, header = None, index_col = None)
-        #odd pages
-        if (k % 2) != 0:
-            identifcation = series.at[2,4]
-        # even pages
-        if (k % 2) == 0:
-            # Finds the first non-null in column 0, Generally this is where "Signal" is
-            start_index = series[0].first_valid_index() + 1
+        try:
+            series = pd.read_excel(sheet_path, sheet_name = sheetname, header = None, index_col = None)
+            #odd pages
+            if (k % 2) != 0:
+                identifcation = series.at[2,4]
+            # even pages
+            if (k % 2) == 0:
+                # Finds the first non-null in column 0, Generally this is where "Signal" is
+                start_index = series[0].first_valid_index() + 1
+                
+                #Remove all data above ""Peak Retention Time"
+                series = series.iloc[start_index:]
+                
+                # Renames column names to Peak retention time, etc.
+                headers = series.iloc[0]
+                series = pd.DataFrame(series.values[1:], columns = headers)
+                
+                # Removes all dead space from Excel merged columns
+                series = series.loc[:, series.columns.notnull()]
+                ## Old method
+                #series = series.loc[:,~series.columns.str.match('Unnamed')]
+               
+                # Removes all rows that have more than 2 NaN
+                series = series.dropna(thresh = 2)
+                index = []
+                for i in range(len(series)):
+                    value = series['Peak\nRetention\nTime'][i]
+                    if math.isnan(value):
+                        continue
+############################### vv USER CHANGE - '0' to decimal place interested in vv ###############################
+                    if round(series['Peak\nRetention\nTime'][i],0) in interested_retention: 
+                        
+######################################## vv USER DONT CHANGE vv  #########################################        
+                        index.append(i)
+                new_series = series.loc[index,:]
+                new_series['id'] = identifcation
+                new_series['excel sheet'] = j
+                all_data_dict[str(identifcation)] = new_series
+                all_data_list.append(new_series)
+        except XLRDError:
+            print('Page {} does not exist in Excel spreadsheet {}'.format(k, j))
+            break
             
-            #Remove all data above ""Peak Retention Time"
-            series = series.iloc[start_index:]
-            
-            # Renames column names to Peak retention time, etc.
-            headers = series.iloc[0]
-            series = pd.DataFrame(series.values[1:], columns = headers)
-            
-            # Removes all dead space from Excel merged columns
-            series = series.loc[:, series.columns.notnull()]
-            ## Old method
-            #series = series.loc[:,~series.columns.str.match('Unnamed')]
-           
-            # Removes all rows that have more than 2 NaN
-            series = series.dropna(thresh = 2)
-            index = []
-            for i in range(len(series)):
-                value = series['Peak\nRetention\nTime'][i]
-                if math.isnan(value):
-                    continue
-                if round(series['Peak\nRetention\nTime'][i],0) in interested_retention: 
-                    index.append(i)
-            new_series = series.loc[index,:]
-            new_series['id'] = identifcation
-            all_data_dict[str(identifcation)] = new_series
-            all_data_list.append(new_series)
     
     ## Old method
     #identification = j.split('/')[-1].split('.')[0]
