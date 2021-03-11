@@ -22,7 +22,7 @@ excel_page_num = 47 ## Change this number to the numer of pages there are in a s
                     ## or a number that you think is high enough to capture all data
                     ## You will receive a print message that tells you where the page number
                     ## does not exist for a given excel sheet 
-
+min_peak_area = 10
 
 ######################################## vv USER DONT CHANGE vv  #########################################
 
@@ -71,7 +71,7 @@ for j in os.listdir(data_path):
                     if math.isnan(value):
                         continue
 ############################### vv USER CHANGE - '0' to decimal place interested in vv ###############################
-                    if round(series['Peak\nRetention\nTime'][i],0) in interested_retention: 
+                    if (round(series['Peak\nRetention\nTime'][i],0) in interested_retention) & (series['Peak Area\nPercent'][i] > min_peak_area): 
                         
 ######################################## vv USER DONT CHANGE vv  #########################################        
                         index.append(i)
