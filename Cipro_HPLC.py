@@ -43,11 +43,11 @@ for j in os.listdir(data_path):
         sheetname = 'Page ' + str(k)
         try:
             series = pd.read_excel(sheet_path, sheet_name = sheetname, header = None, index_col = None)
-            #odd pages
+            # Identification Page [Generally odd]
             if type(series.at[2,4]) is str:
                 identifcation = series.at[2,4]
                 continue
-            # even pages
+            # Data Page(s) [Generally even but if more than one page of data exist, off shifts odd/even cycle]
             else:
                 # Finds the first non-null in column 0, Generally this is where "Signal" is
                 start_index = series[0].first_valid_index() + 1
@@ -79,6 +79,7 @@ for j in os.listdir(data_path):
                 new_series = series.loc[index,:]
                 new_series['id'] = identifcation
                 new_series['excel sheet'] = j
+                new_series['page number'] = k
                 all_data_dict[str(identifcation)] = new_series
                 all_data_list.append(new_series)
         except XLRDError:
