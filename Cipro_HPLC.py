@@ -16,7 +16,7 @@ from xlrd import XLRDError
 
 ### import all csv files to the Data bin then run
 
-interested_retention = [8, 15,19,20,22] ### change this to the retention times you are interestsed in
+interested_retention = [8, 15,19,20,22, 30] ### change this to the retention times you are interestsed in
 excel_page_num = 47 ## Change this number to the numer of pages there are in a single Excel sheet.
                     ## If there are multiple sheets with varying page numbers, enter the max excel sheet 
                     ## or a number that you think is high enough to capture all data
@@ -44,10 +44,11 @@ for j in os.listdir(data_path):
         try:
             series = pd.read_excel(sheet_path, sheet_name = sheetname, header = None, index_col = None)
             #odd pages
-            if (k % 2) != 0:
+            if type(series.at[2,4]) is str:
                 identifcation = series.at[2,4]
+                continue
             # even pages
-            if (k % 2) == 0:
+            else:
                 # Finds the first non-null in column 0, Generally this is where "Signal" is
                 start_index = series[0].first_valid_index() + 1
                 
