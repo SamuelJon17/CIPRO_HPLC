@@ -9,7 +9,21 @@ import pandas as pd
 import os
 from xlrd import XLRDError
 
-def hplc(Athena = True, windows = False, excel_page_num = 999):
+def hplc(windows = False, excel_page_num = 999):
+    '''
+    Parameters
+    ----------
+    windows : boolean, optional
+        DESCRIPTION. The default is False. Fixes file path based on operating system
+    excel_page_num : int, optional
+        DESCRIPTION. The default is 999. Set the max sheet number within a given excel spreadsheet. If number selected is higher than actual
+        XLDRError will present itself and break the code.
+    Returns
+    -------
+    all_data_list : pandas data frame
+        DESCRIPTION. Combined data frame that has all spreadsheets and excels from the directory path
+
+    '''
     
     all_data_list = []
     if windows:
