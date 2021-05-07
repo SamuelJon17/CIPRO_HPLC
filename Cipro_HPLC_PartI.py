@@ -7,36 +7,25 @@ Created on Thu Mar  4 10:38:10 2021
 """
 import pandas as pd
 import os
-import math
 from xlrd import XLRDError
 
-
-##########################################  vv USER CHANGE vv  ##########################################
-
-
-### import all csv files to the Data bin then run
-
-interested_retention = [8, 15,19,20,22, 30] ### change this to the retention times you are interestsed in
-excel_page_num = 47 ## Change this number to the numer of pages there are in a single Excel sheet.
-                    ## If there are multiple sheets with varying page numbers, enter the max excel sheet 
-                    ## or a number that you think is high enough to capture all data
-                    ## You will receive a print message that tells you where the page number
-                    ## does not exist for a given excel sheet 
-min_peak_area = 10
-
-######################################## vv USER DONT CHANGE vv  #########################################
-def hplc(Athena = True):
+def hplc(Athena = True, windows = False, excel_page_num = 999):
     
-    data_path = os.getcwd() + '\\Data'
-    all_data_dict = {}
     all_data_list = []
-    counter = 0
-    
+    if windows:
+        data_path = os.getcwd() + '\\Data'
+    else:
+        data_path = os.getcwd() + '/Data'
+
     for j in os.listdir(data_path):
         if (j == '.DS_Store') or ('~$' in j):
             continue
-        sheet_path = data_path + '\\' + str(j)
-        
+       
+        if windows:
+            sheet_path = data_path + '\\' + str(j)
+        else:
+            sheet_path = data_path + '/' + str(j)
+            
         # Header = None creates integer column names and grabs the whole sheet
         #series = pd.read_excel(sheet_path, sheet_name = 'Page 2', header = None, index = False, index_col = None)
         
@@ -77,28 +66,20 @@ def hplc(Athena = True):
                    
                     # Removes all rows that have more than 2 NaN
                     series = series.dropna(thresh = 2)
+                    series = series[series['Peak\nRetention\nTime'].notna()]
                     series['id'] = identifcation
                     series['excel sheet'] = j
                     series['page number'] = k
                     all_data_list.append(series)
+            
             except XLRDError:
                 print('Page {} does not exist in Excel spreadsheet {}'.format(k, j))
                 break
                 
-        
-        ## Old method
-        #identification = j.split('/')[-1].split('.')[0]
-        # index = []
-        # for i in range(len(series)):
-        #     if any(round(series['Peak\nRetention\nTime'][i],0) == interested_retention): 
-        #         index.append(i)
-        # new_series = series.loc[index,:]
-        # new_series['id'] = identification
-        # all_data_dict[str(identification)] = new_series
-        # all_data_list.append(new_series)
-    
     all_data_list = pd.concat(all_data_list)
+    return all_data_list
     
+def save_data(data):
     file_name = 'data_0.csv'
     csv_path = os.getcwd() + file_name
     if os.path.isfile(file_name):
@@ -111,6 +92,10 @@ def hplc(Athena = True):
             else:
                 file_name = new_file_name
                 break
-    all_data_list.to_csv(file_name, index=False)
-    return all_data_list
-a = hplc()
+    data.to_csv(file_name, index=False)
+
+if __name__ == '__main__':
+    test = hplc(windows = False)
+    save_data(test)
+
+
