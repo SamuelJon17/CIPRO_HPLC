@@ -8,8 +8,8 @@ Created on Thu Mar  4 10:38:10 2021
 import pandas as pd
 import os
 from xlrd import XLRDError
-
-def hplc(windows = False, excel_page_num = 999):
+    
+def hplc(windows = False, excel_page_num = 999, unit = None, cipro_rt = None):
     '''
     Parameters
     ----------
@@ -24,12 +24,13 @@ def hplc(windows = False, excel_page_num = 999):
         DESCRIPTION. Combined data frame that has all spreadsheets and excels from the directory path
 
     '''
-    
+    if (unit == None) | (unit == ''):
+        unit = input('Please input the process (i.e. r3, r5, cau, pau): ')
     all_data_list = []
     if windows:
-        data_path = os.getcwd() + '\\Data'
+        data_path = os.getcwd() + '\\Data\\' + str(unit).lower()
     else:
-        data_path = os.getcwd() + '/Data'
+        data_path = os.getcwd() + '/Data/' + str(unit).lower()
 
     for j in os.listdir(data_path):
         if (j == '.DS_Store') or ('~$' in j):
@@ -81,6 +82,12 @@ def hplc(windows = False, excel_page_num = 999):
                     # Removes all rows that have more than 2 NaN
                     series = series.dropna(thresh = 2)
                     series = series[series['Peak\nRetention\nTime'].notna()]
+                    if unit == 'r3':
+                        if cipro_rt == None:
+                            cipro_rt = input('Please input the RT of cipro to update the RRT: ')
+                            if cipro_rt == '':
+                                cipro_rt = 1
+                        series['RRT (ISTD)'] = [float(x)/cipro_rt for x in series['RRT (ISTD)']]
                     series['id'] = identifcation
                     series['excel sheet'] = j
                     series['page number'] = k
@@ -89,27 +96,35 @@ def hplc(windows = False, excel_page_num = 999):
             except XLRDError:
                 print('Page {} does not exist in Excel spreadsheet {}'.format(k, j))
                 break
-                
-    all_data_list = pd.concat(all_data_list)
+    if len(all_data_list) >= 1:         
+        all_data_list = pd.concat(all_data_list)
+    else:
+        print('The directory, {}, is currently empty. Please make sure that files were properly added to the correct directory folder.'.format(unit))
     return all_data_list
     
-def save_data(data):
-    file_name = 'data_0.csv'
-    csv_path = os.getcwd() + file_name
-    if os.path.isfile(file_name):
-        expand = 0
-        while True:
-            expand += 1
-            new_file_name = file_name.split("_")[0] + '_' + str(expand) + '.csv'
-            if os.path.isfile(new_file_name):
-                continue
-            else:
-                file_name = new_file_name
-                break
-    data.to_csv(file_name, index=False)
+def save_data(data, unit = None):
+    if type(data) == list:
+        return None
+    else:
+        if (unit == None) | (unit == ''):
+            unit = input('Please input the process (i.e. r3, r5, cau, pau): ')
+        file_name = str(unit) + '-output-data_0.csv'
+        csv_path = os.getcwd() + file_name
+        if os.path.isfile(file_name):
+            expand = 0
+            while True:
+                expand += 1
+                new_file_name = file_name.split("_")[0] + '_' + str(expand) + '.csv'
+                if os.path.isfile(new_file_name):
+                    continue
+                else:
+                    file_name = new_file_name
+                    break
+        data.to_csv(file_name, index=False)
 
 if __name__ == '__main__':
-    test = hplc(windows = False)
-    save_data(test)
+    unit_ = input('Please input the process (i.e. r3, r5, cau, pau): ')
+    test = hplc(windows = False, unit = unit_)
+    save_data(test, unit = unit_)
 
 
