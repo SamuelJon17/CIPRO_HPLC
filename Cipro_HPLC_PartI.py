@@ -102,29 +102,34 @@ def hplc(windows = False, excel_page_num = 999, unit = None, cipro_rt = None):
         print('The directory, {}, is currently empty. Please make sure that files were properly added to the correct directory folder.'.format(unit))
     return all_data_list
     
-def save_data(data, unit = None):
+def save_data(data, unit = None, windows = False):
     if type(data) == list:
         return None
     else:
+        if windows:
+            slash = '\\'
+        else:
+            slash = '/'
         if (unit == None) | (unit == ''):
             unit = input('Please input the process (i.e. r3, r5, cau, pau): ')
         file_name = str(unit) + '-output-data_0.csv'
-        csv_path = os.getcwd() + file_name
-        if os.path.isfile(file_name):
+        csv_path = os.path.abspath("output") + slash + file_name
+        if os.path.isfile(csv_path):
             expand = 0
             while True:
                 expand += 1
                 new_file_name = file_name.split("_")[0] + '_' + str(expand) + '.csv'
-                if os.path.isfile(new_file_name):
+                csv_path = os.path.abspath("output") + slash + new_file_name
+                if os.path.isfile(csv_path):
                     continue
                 else:
-                    file_name = new_file_name
+                    file_name = csv_path
                     break
-        data.to_csv(file_name, index=False)
+        data.to_csv(csv_path, index=False)
 
 if __name__ == '__main__':
-    unit_ = input('Please input the process (i.e. r3, r5, cau, pau): ')
-    test = hplc(windows = False, unit = unit_)
-    save_data(test, unit = unit_)
+     unit_ = input('Please input the process (i.e. r3, r5, cau, pau): ')
+     test = hplc(windows = False, unit = unit_)
+     save_data(test, unit = unit_)
 
 
