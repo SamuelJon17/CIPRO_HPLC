@@ -9,6 +9,22 @@ import os
 import pandas as pd
 
 def Import(folder = None, windows = False):
+    '''
+
+    Parameters
+    ----------
+    folder : path
+        DESCRIPTION. The default is None.
+    windows : boolean, optional
+        DESCRIPTION. The default is False. Apply True if running the program on Windows OS
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION. If the path exist, returns a pandas dataframe
+
+    '''
+    
     if windows:
         slash = '\\'
     else:
@@ -19,17 +35,49 @@ def Import(folder = None, windows = False):
             return print('Please enter a file name')
     path = os.path.abspath('output'+ slash + folder)
     try:
-        #path.split('.')[1] == 'csv'
         series = pd.read_csv(path, header = 0)
         return series
     except:
         return print('Please ensure that the file is correct and has a .csv extension')
 
 def rrt_range(rrt, range_ = 0.02):
+    '''
+    Overview : outputs the relative retention time range for a given retentino time. Useful within the IFM algorithm when checkcing through
+    all data and classifying data as the same value or not based on the range of retention time(s). For example, if sample A has an rrt = 0.9, 
+    based on a range_ = 0.02, sample B with rrt=0.92 would be classified as 0.9 because it falls in the range of [0.9-0.02, 0.9+0.02]
+    
+    Parameters
+    ----------
+    rrt : float
+        DESCRIPTION. relative retention time
+    range_ : float
+        DESCRIPTION. The default is 0.02. This value will be the addition/subtraction for the upper and lower bound of the relative retention
+        time range. 
+
+    Returns
+    -------
+    list
+        DESCRIPTION. lower and upper bound range rounded to 2 decimal places for the relative retention time
+
+    '''
     rrt = float(rrt)
     return [round(rrt-range_,2),round(rrt+range_,2)]
 
 def ifm(data = 'sample_combined_data_0.csv'):
+    '''
+
+    Parameters
+    ----------
+    data : csv name within the 
+        DESCRIPTION. The default is 'sample_combined_data_0.csv'.
+
+    Returns
+    -------
+    df : TYPE
+        DESCRIPTION.
+
+    '''
+    
     series = Import(folder = data)
     lst = series['RRT (ISTD)'].round(2).tolist() #represents list of relative retention times, make sure to round prior
     ranges = [rrt_range(lst[0])] #represents ranges of unique list
