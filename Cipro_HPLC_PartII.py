@@ -21,7 +21,7 @@ def Import(folder = None, windows = False):
     Returns
     -------
     TYPE
-        DESCRIPTION. If the path exist, returns a pandas dataframe
+        DESCRIPTION. If the path exist in the CIPRO_HPLC/output directory, returns a pandas dataframe
 
     '''
     
@@ -33,7 +33,7 @@ def Import(folder = None, windows = False):
         folder = input('Please specifiy which data you would like imported. Make sure to include the file extension (i.e, .csv): ')
         if folder == '':
             return print('Please enter a file name')
-    path = os.path.abspath('output'+ slash + folder)
+    path = os.path.abspath('output'+ slash + 'clean' + slash + folder)
     try:
         series = pd.read_csv(path, header = 0)
         return series
@@ -63,25 +63,29 @@ def rrt_range(rrt, range_ = 0.02):
     rrt = float(rrt)
     return [round(rrt-range_,2),round(rrt+range_,2)]
 
-def ifm(data = 'sample_combined_data_0.csv'):
+
+def ifm(data = 'sample_combined_data_0.csv', r = 0.02):
     '''
 
     Parameters
     ----------
-    data : csv name within the 
+    data : csv name within the the CIPRO_HPLC/output directory. Used as a variable for function Import
         DESCRIPTION. The default is 'sample_combined_data_0.csv'.
+    r : used as range_ input for rrt_range
+        DESCRIPTION. The default is 0.02
 
     Returns
     -------
-    df : TYPE
-        DESCRIPTION.
+    df : pandas dataframe
+        DESCRIPTION. Summary dataframe with columns as unique relative retention times after applying rrt_range, rows as samples and the data as
+        LCAP%. 
 
     '''
     
     series = Import(folder = data)
     lst = series['RRT (ISTD)'].round(2).tolist() #represents list of relative retention times, make sure to round prior
-    ranges = [rrt_range(lst[0])] #represents ranges of unique list
-    range_dict = {str(rrt_range(lst[0])):lst[0]}
+    ranges = [rrt_range(lst[0], range_=r)] #represents ranges of unique list
+    range_dict = {str(rrt_range(lst[0], range_=r)):lst[0]}
     new_lst = [] #represents unique list of relative retention times based on ranges, initialize with the first number
     for i, num in enumerate(lst):
         if any(r[0] <= num <= r[1] for r in ranges): #if num is within any of the ranges, add the number that corresponds to that range to new_list
@@ -108,6 +112,23 @@ def ifm(data = 'sample_combined_data_0.csv'):
     return df
 
 def save_data(data, unit = None, windows = False):
+    '''
+    Parameters
+    ----------
+    data : pandas dataframe
+        DESCRIPTION. dataframe after undergoing ifm()
+    unit : str
+        DESCRIPTION. The default is None. unit process such as 'r3, r5, cau, pau'. Used to name the save file correctly
+    windows : boolean, optional
+        DESCRIPTION. The default is False. Apply True if running the program on Windows OS
+
+    Returns
+    -------
+    None. Saves data under CIPRO_HPLC/output/ with extention 'unit'-summary-data_#.csv where # starts at 0 and += 1 if there exist a file w/ that extenssion.
+
+    '''
+    
+    
     if type(data) == list:
         return None
     else:
@@ -118,13 +139,13 @@ def save_data(data, unit = None, windows = False):
         if (unit == None) | (unit == ''):
             unit = input('Please input the process (i.e. r3, r5, cau, pau): ')
         file_name = str(unit) + '-summary-data_0.csv'
-        csv_path = os.path.abspath("output") + slash + file_name
+        csv_path = os.path.abspath("output" + slash + 'summary' +slash + file_name)
         if os.path.isfile(csv_path):
             expand = 0
             while True:
                 expand += 1
                 new_file_name = file_name.split("_")[0] + '_' + str(expand) + '.csv'
-                csv_path = os.path.abspath("output") + slash + new_file_name
+                csv_path = os.path.abspath("output" + slash + 'summary' + slash + new_file_name)
                 if os.path.isfile(csv_path):
                     continue
                 else:
@@ -132,7 +153,9 @@ def save_data(data, unit = None, windows = False):
                     break
         data.to_csv(csv_path, index=True)
 
+from timeit import default_timer as timer
 if __name__ == '__main__':
-    df = ifm(data = 'sample_combined_data_0.csv')
-    #save_data(data = df, unit = 'r3')   
-   
+    start = timer()
+    df = ifm(data = 'r5-clean-data_0.csv', r = 0.02)
+    save_data(data = df, unit = 'r5')   
+    print(timer()-start)

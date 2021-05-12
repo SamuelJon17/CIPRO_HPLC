@@ -112,8 +112,8 @@ def save_data(data, unit = None, windows = False):
             slash = '/'
         if (unit == None) | (unit == ''):
             unit = input('Please input the process (i.e. r3, r5, cau, pau): ')
-        file_name = str(unit) + '-output-data_0.csv'
-        csv_path = os.path.abspath("output") + slash + file_name
+        file_name = str(unit) + '-clean-data_0.csv'
+        csv_path = os.path.abspath("output") + slash + 'clean' + slash + file_name
         if os.path.isfile(csv_path):
             expand = 0
             while True:
@@ -127,9 +127,12 @@ def save_data(data, unit = None, windows = False):
                     break
         data.to_csv(csv_path, index=False)
 
+from timeit import default_timer as timer
 if __name__ == '__main__':
+      start = timer()
       unit_ = input('Please input the process (i.e. r3, r5, cau, pau): ')
       test = hplc(windows = False, unit = unit_)
-#      save_data(test, unit = unit_)
+      save_data(test, unit = unit_)
+      print(timer() -start)
 
 
