@@ -128,8 +128,8 @@ def save_data(data, unit = None, windows = False):
         data.to_csv(csv_path, index=False)
 
 if __name__ == '__main__':
-     unit_ = input('Please input the process (i.e. r3, r5, cau, pau): ')
-     test = hplc(windows = False, unit = unit_)
-     save_data(test, unit = unit_)
+      unit_ = input('Please input the process (i.e. r3, r5, cau, pau): ')
+      test = hplc(windows = False, unit = unit_)
+#      save_data(test, unit = unit_)
 
 
