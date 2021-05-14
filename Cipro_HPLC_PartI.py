@@ -8,6 +8,7 @@ Created on Thu Mar  4 10:38:10 2021
 import pandas as pd
 import os
 from xlrd import XLRDError
+ 
     
 def hplc(windows = False, excel_page_num = 999, unit = None, cipro_rt = None):
     '''
@@ -84,10 +85,10 @@ def hplc(windows = False, excel_page_num = 999, unit = None, cipro_rt = None):
                     series = series[series['Peak\nRetention\nTime'].notna()]
                     if unit == 'r3':
                         if cipro_rt == None:
-                            cipro_rt = input('Please input the RT of cipro to update the RRT: ')
+                            cipro_rt = float(input('Please input the RT of cipro to update the RRT: '))
                             if cipro_rt == '':
                                 cipro_rt = 1
-                        series['RRT (ISTD)'] = [float(x)/cipro_rt for x in series['RRT (ISTD)']]
+                        series['RRT (ISTD) new'] = [float(x)/cipro_rt for x in series['Peak\nRetention\nTime']]
                     series['id'] = identifcation
                     series['excel sheet'] = j
                     series['page number'] = k
@@ -130,9 +131,11 @@ def save_data(data, unit = None, windows = False):
 from timeit import default_timer as timer
 if __name__ == '__main__':
       start = timer()
+      w = True
       unit_ = input('Please input the process (i.e. r3, r5, cau, pau): ')
-      test = hplc(windows = False, unit = unit_)
-      save_data(test, unit = unit_)
+      test = hplc(windows = w, unit = unit_)
+      save_data(test, unit = unit_, windows = w)
       print(timer() -start)
+      
 
 
