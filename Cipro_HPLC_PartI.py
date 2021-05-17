@@ -51,48 +51,65 @@ def hplc(windows = False, excel_page_num = 999, unit = None, cipro_rt = None):
                 series = pd.read_excel(sheet_path, sheet_name = sheetname, header = None, index_col = None)
                 
                 # Identification Page [Generally odd]
-                if type(series.at[2,4]) is str:
+                if type(series.at[2,0]) is str:
                     identifcation = series.at[2,4]
+                    if 'blank' in identifcation.lower():
+                        identifcation = identifcation + ' ' + str(j) + ' ' + str(k)
                     continue
-                elif type(series.at[6,1]) is str:
-                    identifcation = series.at[6,5]
-                    continue
-                # Data Page(s) [Generally even but if more than one page of data exist, off shifts odd/even cycle]
+                #elif len(series) >= 7:
                 else:
-                    # Remove the first row 
-                    series = series.iloc[1:]
+                    #This applied for data from Beyonce
+                    try:
+                        if type(series.at[6,1]) is str:
+                            identifcation = series.at[6,5]
+                            if 'blank' in identifcation.lower():
+                                identifcation = identifcation + ' ' + str(j) + ' ' + str(k)
+                            continue
+                        elif 'signal' not in str(series.at[0,0]).lower():
+                            # Remove the first row 
+                            series = series.iloc[1:]
+                            #Reset index numbers
+                            series = series.reset_index(drop=True)
+                    except KeyError:
+                        if 'signal' not in str(series.at[0,0]).lower():
+                            # Remove the first row 
+                            series = series.iloc[1:]
+                            #Reset index numbers
+                            series = series.reset_index(drop=True)
                     
-                    #Reset index numbers
-                    series = series.reset_index(drop=True)
-                    
-                    # Finds the first non-null in column 0, Generally this is where "Signal" is
-                    start_index = series[0].first_valid_index() + 1
-                    
-                    #Remove all data above ""Peak Retention Time"
-                    series = series.iloc[start_index:]
-                    
-                    # Renames column names to Peak retention time, etc.
-                    headers = series.iloc[0]
-                    series = pd.DataFrame(series.values[1:], columns = headers)
-                    
-                    # Removes all dead space from Excel merged columns
-                    series = series.loc[:, series.columns.notnull()]
-                    ## Old method
-                    #series = series.loc[:,~series.columns.str.match('Unnamed')]
                    
-                    # Removes all rows that have more than 2 NaN
-                    series = series.dropna(thresh = 2)
-                    series = series[series['Peak\nRetention\nTime'].notna()]
-                    if unit == 'r3':
-                        if cipro_rt == None:
-                            cipro_rt = float(input('Please input the RT of cipro to update the RRT: '))
-                            if cipro_rt == '':
-                                cipro_rt = 1
-                        series['RRT (ISTD) new'] = [float(x)/cipro_rt for x in series['Peak\nRetention\nTime']]
-                    series['id'] = identifcation
-                    series['excel sheet'] = j
-                    series['page number'] = k
-                    all_data_list.append(series)
+                            
+                # Finds the first non-null in column 0, Generally this is where "Signal" is
+                start_index = series[0].first_valid_index() + 1
+                    
+                #Remove all data above ""Peak Retention Time"
+                series = series.iloc[start_index:]
+                    
+                # Renames column names to Peak retention time, etc.
+                headers = series.iloc[0]
+                series = pd.DataFrame(series.values[1:], columns = headers)
+                    
+                # Removes all dead space from Excel merged columns
+                series = series.loc[:, series.columns.notnull()]
+                ## Old method
+                #series = series.loc[:,~series.columns.str.match('Unnamed')]
+                   
+                # Removes all rows that have more than 2 NaN
+                series = series.dropna(thresh = 2)
+                series = series[series['Peak\nRetention\nTime'].notna()]
+                if unit == 'r3' or unit == 'r5':
+                    if cipro_rt == None:
+                        cipro_rt = input('Please input the RT of cipro to update the RRT: ')
+                        if cipro_rt == '':
+                            cipro_rt = 1
+                    if cipro_rt ==1:
+                        series['RRT (ISTD)'] = series['RRT (ISTD)']
+                    else:
+                        series['RRT (ISTD)'] = [float(x)/float(cipro_rt) for x in series['Peak\nRetention\nTime']]
+                series['id'] = identifcation
+                series['excel sheet'] = j
+                series['page number'] = k
+                all_data_list.append(series)
             
             except XLRDError:
                 print('Page {} does not exist in Excel spreadsheet {}'.format(k, j))
@@ -120,7 +137,7 @@ def save_data(data, unit = None, windows = False):
             while True:
                 expand += 1
                 new_file_name = file_name.split("_")[0] + '_' + str(expand) + '.csv'
-                csv_path = os.path.abspath("output") + slash + new_file_name
+                csv_path = os.path.abspath("output") + slash + 'clean' + slash+ new_file_name
                 if os.path.isfile(csv_path):
                     continue
                 else:
