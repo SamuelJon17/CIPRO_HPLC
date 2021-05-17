@@ -8,7 +8,7 @@ Created on Tue May 11 11:10:53 2021
 import os
 import pandas as pd
 
-def Import(folder = None, windows = False):
+def Import(folder = None, windows = True):
     '''
 
     Parameters
@@ -108,10 +108,10 @@ def ifm(data = 'sample_combined_data_0.csv', r = 0.02):
                         test_list[test_list.index(j)]=subset[key][:,1].tolist()[idx2]
             final_dict.update({key: test_list})
     df = pd.DataFrame.from_dict(final_dict, orient='index', columns = new_set)
-    df = df.reindex(sorted(df.columns), axis=1)
+    df = df.reindex(sorted(df.columns), axis = 1)
     return df
 
-def save_data(data, unit = None, windows = False):
+def save_data(data, unit = None, windows = True):
     '''
     Parameters
     ----------
@@ -161,9 +161,10 @@ if __name__ == '__main__':
         w = False
     else:
         w = True
-    clean_path = input('Please enter the -clean.csv data that you want an IFM mapping for. Make sure to include .csv  ')
-    unit_ = input('Please input the process (i.e. r3, r5, cau, pau, other): ')
+    clean_data = input('Please input clean .csv file name: ')
+    cip_step = input('Please input the process (i.e. r3, r5, cau, pau): ')
     start = timer()
-    df = ifm(data = clean_path, r = 0.02)
     save_data(data = df, unit = unit_)   
     print('Total time to run code was {} sec'.format(timer() -start))
+    save_data(data = df, unit = cip_step)   
+    df = ifm(data = clean_data, r = 0.02)
