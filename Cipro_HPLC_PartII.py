@@ -164,7 +164,7 @@ if __name__ == '__main__':
     clean_data = input('Please input clean .csv file name: ')
     cip_step = input('Please input the process (i.e. r3, r5, cau, pau): ')
     start = timer()
-    save_data(data = df, unit = unit_)   
-    print('Total time to run code was {} sec'.format(timer() -start))
-    save_data(data = df, unit = cip_step)   
     df = ifm(data = clean_data, r = 0.02)
+    save_data(data = df, unit = cip_step)     
+    print('Total time to run code was {} sec'.format(timer() -start))  
+    
