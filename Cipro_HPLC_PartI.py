@@ -26,7 +26,7 @@ def hplc(windows = False, excel_page_num = 999, unit = None, cipro_rt = None):
 
     '''
     if (unit == None) | (unit == ''):
-        unit = input('Please input the process (i.e. r3, r5, cau, pau): ')
+        unit = input('Please input the process (i.e. r3, r5, cau, pau, other): ')
     all_data_list = []
     if windows:
         data_path = os.getcwd() + '\\Data\\' + str(unit).lower()
@@ -129,7 +129,7 @@ def save_data(data, unit = None, windows = False):
         else:
             slash = '/'
         if (unit == None) | (unit == ''):
-            unit = input('Please input the process (i.e. r3, r5, cau, pau): ')
+            unit = input('Please input the process (i.e. r3, r5, cau, pau, other): ')
         file_name = str(unit) + '-clean-data_0.csv'
         csv_path = os.path.abspath("output") + slash + 'clean' + slash + file_name
         if os.path.isfile(csv_path):
@@ -144,15 +144,21 @@ def save_data(data, unit = None, windows = False):
                     file_name = csv_path
                     break
         data.to_csv(csv_path, index=False)
+    print('File was saved at {}'.format(csv_path))
 
 from timeit import default_timer as timer
+
 if __name__ == '__main__':
+      w = input('Are you using a windows? (y/n) ')
+      if w == 'n':
+          w = False
+      else:
+          w = True
+      unit_ = input('Please input the process (i.e. r3, r5, cau, pau, other): ')
       start = timer()
-      w = True
-      unit_ = input('Please input the process (i.e. r3, r5, cau, pau): ')
       test = hplc(windows = w, unit = unit_)
       save_data(test, unit = unit_, windows = w)
-      print(timer() -start)
+      print('Total time to run code was {} sec'.format(timer() -start))
       
 
 
