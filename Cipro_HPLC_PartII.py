@@ -64,7 +64,7 @@ def rrt_range(rrt, range_ = 0.02):
     return [round(rrt-range_,2),round(rrt+range_,2)]
 
 
-def ifm(data = 'sample_combined_data_0.csv', r = 0.02):
+def ifm(data = 'sample_combined_data_0.csv', r = 0.02, windows_ = False):
     '''
 
     Parameters
@@ -82,7 +82,7 @@ def ifm(data = 'sample_combined_data_0.csv', r = 0.02):
 
     '''
     
-    series = Import(folder = data)
+    series = Import(folder = data, windows = windows_)
     lst = series['RRT (ISTD)'].round(2).tolist() #represents list of relative retention times, make sure to round prior
     ranges = [rrt_range(lst[0], range_=r)] #represents ranges of unique list
     range_dict = {str(rrt_range(lst[0], range_=r)):lst[0]}
@@ -164,7 +164,7 @@ if __name__ == '__main__':
     clean_data = input('Please input clean .csv file name: ')
     cip_step = input('Please input the process (i.e. r3, r5, cau, pau): ')
     start = timer()
-    df = ifm(data = clean_data, r = 0.02)
-    save_data(data = df, unit = cip_step)     
+    df = ifm(data = clean_data, r = 0.02, windows_ = w)
+    save_data(data = df, unit = cip_step, windows =w)     
     print('Total time to run code was {} sec'.format(timer() -start))  
     
