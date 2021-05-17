@@ -97,15 +97,15 @@ def hplc(windows = False, excel_page_num = 999, unit = None, cipro_rt = None):
                 # Removes all rows that have more than 2 NaN
                 series = series.dropna(thresh = 2)
                 series = series[series['Peak\nRetention\nTime'].notna()]
-                if unit == 'r3' or unit == 'r5':
-                    if cipro_rt == None:
-                        cipro_rt = input('Please input the RT of cipro to update the RRT: ')
-                        if cipro_rt == '':
-                            cipro_rt = 1
-                    if cipro_rt ==1:
-                        series['RRT (ISTD)'] = series['RRT (ISTD)']
-                    else:
-                        series['RRT (ISTD)'] = [float(x)/float(cipro_rt) for x in series['Peak\nRetention\nTime']]
+                #if unit == 'r3' or unit == 'r5'
+                if cipro_rt == None:
+                    cipro_rt = input('Please input the RT of cipro to update the RRT: ')
+                    if cipro_rt == '':
+                        cipro_rt = 1
+                if cipro_rt ==1:
+                    series['RRT (ISTD)'] = series['RRT (ISTD)']
+                else:
+                    series['RRT (ISTD)'] = [float(x)/float(cipro_rt) for x in series['Peak\nRetention\nTime']]
                 series['id'] = identifcation
                 series['excel sheet'] = j
                 series['page number'] = k
