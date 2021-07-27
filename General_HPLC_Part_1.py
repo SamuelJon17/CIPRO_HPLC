@@ -8,6 +8,7 @@ Created on Thu Mar  4 10:38:10 2021
 import pandas as pd
 import os
 from xlrd import XLRDError
+import ast
 
 def hplc_clean(excel_page_num = 999, unit = None, reference_chem = None):
     if (unit == None) | (unit == ''):
@@ -29,7 +30,6 @@ def hplc_clean(excel_page_num = 999, unit = None, reference_chem = None):
                         if 'blank' in identifcation.lower():
                             identifcation = identifcation + ' ' + str(j) + ' ' + str(k)
                         continue
-                    #elif len(series) >= 7:
                     else: #Dealing with different Agilents [Beyonce]
                         try:
                             if type(series.at[6,1]) is str:
@@ -79,29 +79,29 @@ def hplc_clean(excel_page_num = 999, unit = None, reference_chem = None):
             data['excel_sheet'] = pd.read_excel(sheet_path, sheet_name = 'Overview', header = None, index_col = None).at[3,2]
             try:
                 if (reference_chem == None) | (reference_chem == ''):
-                    reference_chem = input('Please input the RT (float) of reference sample to update the RRT or type no: ')
-                    if reference_chem == 'no':
-                        reference_value = 1
+                    reference_chem = input('Please input the reference chemical of interest (case-sensitive) or '
+                                           'type (float) a reference RT of interest: ')
+                    if type(reference_chem) == str:
+                        reference_series = data[data['Peak Name'].str.endswith(reference_chem, na=False)]
+                        reference_value = reference_series.iloc[0]['RT']
+                    else:
+                        reference_value = reference_chem
                 else:
                     reference_series = data[data['Peak Name'].str.endswith(reference_chem, na=False)]
                     reference_value = reference_series.iloc[0]['RT']
                 data['RRT'] = [float(x) / float(reference_value) for x in data['RT']]
             except:
                 data['RRT'] = data['RT']
-
             try:
                 data = data.rename(columns={'Peak Name': 'Compound', 'RT': 'Peak\nRetention\nTime', 'RRT': 'RRT (ISTD)',
                                     'LCAP ': 'Peak\nArea\nPercent', 'Amount ':'Compound Amount', 'Area ': 'Area', 'Height ': 'Height' })
                 data = data[['Peak\nRetention\nTime', 'RRT (ISTD)', 'Peak\nArea\nPercent', 'Area', 'Height', 'Compound',
                              'Compound Amount', 'id', 'excel_sheet']]
-                #data = data.drop(columns=['As (EP)', 'No. '])
-
             except KeyError: #Midaz does not have 'compound amount; and instead has 'S/N'
                 data = data.rename(columns={'Peak Name': 'Compound', 'RT': 'Peak\nRetention\nTime', 'RRT': 'RRT (ISTD)',
                                             'LCAP ': 'Peak\nArea\nPercent', 'Area ': 'Area', 'Height ': 'Height'})
                 data = data[['Peak\nRetention\nTime', 'RRT (ISTD)', 'Peak\nArea\nPercent', 'Area', 'Height', 'Compound',
                              'id', 'excel_sheet']]
-                #data = data.drop(columns=['As (EP)', 'No. ', 'S/N '])
             all_data_list.append(data)
     if len(all_data_list) >= 1:         
         all_data_list = pd.concat(all_data_list)
