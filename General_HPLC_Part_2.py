@@ -26,7 +26,9 @@ def average(lst):
     return sum(lst) / len(lst)
 
 def ifm(data = None, r = None, round_num = None):
-    data = data + '.csv'
+    if (data == None) | (data == ''):
+        data_name = input('Please input clean file name: ')
+    data = data_name + '.csv'
     series = Import(file_name = data)
     lst = series['RRT (ISTD)'].tolist() #represents list of relative retention times, make sure to round prior
     ranges = [rrt_range(lst[0], range_=r, rounding_num=round_num)] #represents ranges of unique list
@@ -80,22 +82,22 @@ def ifm(data = None, r = None, round_num = None):
             # CGREEN = '\033[1;32;40m'
             # CEND = '\033[1;30;46m'
             print(('\033[31m'+ 'Total LCAP of samples {} do NOT match with raw data. Please try smaller range, bigger rounding, or both' + '\033[30m').format(check))
-        return df
+        return df, data_name
     except ValueError:
         print('Error at rounding {} and range {}'.format(round_num,r))
         return final_rrt_lst
 
-def save_data(data):
+def save_data(data, name):
     if type(data) == list:
         return None
     else:
-        file_name = 'IFM-summary-_0.csv'
+        file_name = name + '_IFM' + '.csv'
         csv_path = os.path.join(os.getcwd(), 'output', 'ifm', file_name)
         if os.path.isfile(csv_path):
             expand = 0
             while True:
                 expand += 1
-                new_file_name = file_name.split("_")[0] + '_' + str(expand) + '.csv'
+                new_file_name = name + '_IFM' + '_' + str(expand) + '.csv'
                 csv_path = os.path.join(os.getcwd(), 'output', 'ifm', new_file_name)
                 if os.path.isfile(csv_path):
                     continue
@@ -107,12 +109,9 @@ def save_data(data):
 
 from timeit import default_timer as timer
 if __name__ == '__main__':
-    clean_data = input('Please input clean file name: ')
-    if len(clean_data) == 0:
-        clena_data = 'thermo-clean-data_8'
     start = timer()
-    df = ifm(data = clean_data, r = 0.01, round_num = 4)
-    save_data(data = df)     
+    df = ifm(data = None, r = 0.01, round_num = 4)
+    save_data(data = df[0], name = df[1])
     print('Total time to run code was {} sec'.format(timer() -start))  
     
         
