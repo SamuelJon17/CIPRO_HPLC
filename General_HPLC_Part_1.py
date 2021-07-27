@@ -53,15 +53,28 @@ def hplc_clean(excel_page_num = 999, unit = None, reference_chem = None):
                     series = series.dropna(thresh = 2) # Removes all rows that have more than 2 NaN
                     series = series[series['Peak\nRetention\nTime'].notna()]
 
+                    if (reference_chem == None) | (reference_chem == ''):
+                        reference_chem = input('Please input the reference chemical of interest (case-sensitive) or '
+                                               'type (float) a reference RT of interest: ')
                     try:
-                        reference_series = series[series['Compound'].str.endswith('Cipro', na=False)]
-                        reference_value = reference_series.iloc[0]['Peak\nRetention\nTime']
-                        data['RRT (ISTD)'] = [float(x) / float(reference_value) for x in data['Peak\nRetention\nTime']]
+                        if len(series[series['Compound'].str.endswith(reference_chem, na=False)]) > 0:
+                            reference_series = series[series['Compound'].str.endswith(reference_chem, na=False)]
+                            reference_value = reference_series.iloc[0]['Peak\nRetention\nTime']
+                        else:
+                            reference_value = reference_chem
+                        series['RRT (ISTD)'] = [float(x) / float(reference_value) for x in series['Peak\nRetention\nTime']]
                     except:
-                        reference_value = input('Please input the RT (float) of reference sample to update the RRT or type no: ')
-                        if reference_value == 'no':
-                            reference_value = 1
-                        data['RRT (ISTD)'] = [float(x) / float(reference_value) for x in data['Peak\nRetention\nTime']]
+                        series['RRT (ISTD)'] = series['Peak\nRetention\nTime']
+
+                    # try:
+                    #     reference_series = series[series['Compound'].str.endswith('Cipro', na=False)]
+                    #     reference_value = reference_series.iloc[0]['Peak\nRetention\nTime']
+                    #     data['RRT (ISTD)'] = [float(x) / float(reference_value) for x in data['Peak\nRetention\nTime']]
+                    # except:
+                    #     reference_value = input('Please input the RT (float) of reference sample to update the RRT or type no: ')
+                    #     if reference_value == 'no':
+                    #         reference_value = 1
+                    #     data['RRT (ISTD)'] = [float(x) / float(reference_value) for x in data['Peak\nRetention\nTime']]
 
                     series['id'] = identifcation
                     series['excel sheet'] = j
