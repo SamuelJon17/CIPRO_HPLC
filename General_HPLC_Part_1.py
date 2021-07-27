@@ -77,18 +77,15 @@ def hplc_clean(excel_page_num = 999, unit = None, reference_chem = None):
             data = data[~data['No. '].isin(['n.a.', 'Total:'])]
             data['id'] = identification
             data['excel_sheet'] = pd.read_excel(sheet_path, sheet_name = 'Overview', header = None, index_col = None).at[3,2]
+            if (reference_chem == None) | (reference_chem == ''):
+                reference_chem = input('Please input the reference chemical of interest (case-sensitive) or '
+                                       'type (float) a reference RT of interest: ')
             try:
-                if (reference_chem == None) | (reference_chem == ''):
-                    reference_chem = input('Please input the reference chemical of interest (case-sensitive) or '
-                                           'type (float) a reference RT of interest: ')
-                    if type(reference_chem) == str:
-                        reference_series = data[data['Peak Name'].str.endswith(reference_chem, na=False)]
-                        reference_value = reference_series.iloc[0]['RT']
-                    else:
-                        reference_value = reference_chem
-                else:
+                if len(data[data['Peak Name'].str.endswith(reference_chem, na=False)]) > 0:
                     reference_series = data[data['Peak Name'].str.endswith(reference_chem, na=False)]
                     reference_value = reference_series.iloc[0]['RT']
+                else:
+                    reference_value = reference_chem
                 data['RRT'] = [float(x) / float(reference_value) for x in data['RT']]
             except:
                 data['RRT'] = data['RT']
