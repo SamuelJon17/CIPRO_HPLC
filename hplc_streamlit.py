@@ -1,5 +1,3 @@
-import streamlit as st
-
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -7,12 +5,10 @@ Created on Thu Mar  4 10:38:10 2021
 
 @author: samueljon
 """
+import streamlit as st
 import pandas as pd
-import os
 from xlrd import XLRDError
-import ast
 import base64
-import numpy as np
 
 def get_table_download_link(df, clean = True):
     """Generates a link allowing the data in a given panda dataframe to be downloaded
@@ -42,7 +38,6 @@ st.text('Cleaning HPLC Data And Impurity Fate Mapping Modules')
 files = st.file_uploader('Add Excel file(s)', accept_multiple_files=True )
 
 system = st.selectbox('Are you using an agilent or thermo system?',('agilent', 'thermo'))
-#system = st.text_input("Are you using an agilent or thermo system? Type: agilent or thermo")
 reference_chem = st.selectbox('Please select a reference chemical for RRT', ('Midazolam', 'CIPRO', 'Cis'))
 
 if st.button("Other reference?"):
