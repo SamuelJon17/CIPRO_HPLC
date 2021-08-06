@@ -10,6 +10,13 @@ import pandas as pd
 from xlrd import XLRDError
 import base64
 
+col1, mid, col2 = st.columns([10,1,25])
+
+with col1:
+    st.image('supporting_docs/odp_logo.png', width=200)
+with col2:
+    st.title('Cleaning HPLC Data And Impurity Fate Mapping')
+
 def get_table_download_link(df, clean = True):
     """Generates a link allowing the data in a given panda dataframe to be downloaded
     in:  dataframe
@@ -34,7 +41,7 @@ def rrt_range(rrt, range_ = None, rounding_num = None):
 def average(lst):
     return sum(lst) / len(lst)
 
-st.title('Cleaning HPLC Data And Impurity Fate Mapping')
+#st.title('Cleaning HPLC Data And Impurity Fate Mapping')
 
 st.subheader('Upload Excel File(s) for Cleaning')
 files = st.file_uploader('Multiple files can be added at once', accept_multiple_files=True )
