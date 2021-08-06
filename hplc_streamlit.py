@@ -34,11 +34,13 @@ def rrt_range(rrt, range_ = None, rounding_num = None):
 def average(lst):
     return sum(lst) / len(lst)
 
-st.text('Cleaning HPLC Data And Impurity Fate Mapping Modules')
-files = st.file_uploader('Add Excel file(s)', accept_multiple_files=True )
+st.title('Cleaning HPLC Data And Impurity Fate Mapping')
+
+st.subheader('Upload Excel File(s) for Cleaning')
+files = st.file_uploader('Multiple files can be added at once', accept_multiple_files=True )
 
 system = st.selectbox('Are you using an agilent or thermo system?',('agilent', 'thermo'))
-reference_chem = st.selectbox('Please select a reference chemical for RRT', ('Midazolam', 'CIPRO', 'Cis'))
+reference_chem = st.selectbox('Please select a reference chemical for RRT', ('Midazolam', 'CIPRO', 'Cis'), index = 2)
 
 if st.button("Other reference?"):
     reference_chem = st.text_input("Input a reference chemical not listed from the dropdown or a specific RT value (ex. 2.11)?")
@@ -135,9 +137,10 @@ if st.button("Clean-up HPLC Data"):
 
 #st.markdown(get_table_download_link(all_data_list, clean = True), unsafe_allow_html=True)
 
-ifm_file = st.file_uploader('Add clean CSV file for IFM', accept_multiple_files=False)
-round_num = st.selectbox('How many digits would you like RT to be rounded by?', (1, 2, 3, 4, 5))
-r = st.selectbox('What range would you like to bucket values?', (0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1))
+st.subheader('Upload a CSV file for IFM')
+ifm_file = st.file_uploader('Only one file at a time.',accept_multiple_files=False)
+round_num = st.selectbox('How many digits would you like RT to be rounded by?', (1, 2, 3, 4, 5), index = 2)
+r = st.selectbox('What range would you like to bucket values?', (0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1), index = 4)
 if st.button('Impurity fate mapping?'):
     series = pd.read_csv(ifm_file, dtype = object, header = 0)
     lst = series['RRT (ISTD)'].tolist()  # represents list of relative retention times, make sure to round prior
@@ -195,3 +198,7 @@ if st.button('Impurity fate mapping?'):
     st.dataframe(df)
     st.markdown(get_table_download_link(df, clean=False), unsafe_allow_html=True)
 
+need_help = st.expander('Need help? 👉')
+with need_help:
+    st.markdown("Having trouble with either modules? Feel free to " + '<a href="mailto:jsamuel@ondemandpharma.com">contact</a>' + ' me!', unsafe_allow_html=True)
+    #st.markdown('<a href="mailto:jsamuel@ondemandpharma.com">Email</a>', unsafe_allow_html=True)
