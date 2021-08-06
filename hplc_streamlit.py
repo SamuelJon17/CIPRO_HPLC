@@ -62,10 +62,9 @@ if st.button("Clean-up HPLC Data"):
                             if 'blank' in identifcation.lower():
                                 identifcation = identifcation + ' ' + str(uploaded_file.name.split('.')[0]) + ' ' + str(k)
                             continue
-
                         else: #Dealing with different Agilents [Beyonce]
                             try:
-                                if type(series.at[6, 1]) == 'Sample name:':
+                                if series.at[6, 1] == 'Sample name:':
                                     identifcation = series.at[6, 5]
                                     if 'blank' in identifcation.lower():
                                         identifcation = identifcation + ' ' + str(uploaded_file.name.split('.')[0]) + ' ' + str(k)
@@ -77,7 +76,6 @@ if st.button("Clean-up HPLC Data"):
                                 if 'signal' not in str(series.at[0,0]).lower():
                                     series = series.iloc[1:] # Remove the first row
                                     series = series.reset_index(drop=True) #Reset index numbers
-
 
                         start_index = series[0].first_valid_index() + 1 # Finds the first non-null in column 0, Generally this is where "Signal" is
                         series = series.iloc[start_index:] #Remove all data above ""Peak Retention Time"
@@ -136,7 +134,7 @@ if st.button("Clean-up HPLC Data"):
             else:
                 st.write('Please ensure that only thermo or agilent files are processed together')
     all_data_list = pd.concat(all_data_list)
-    st.subheader('Raw data')
+    st.subheader('Clean HPLC data')
     st.dataframe(all_data_list)
     st.markdown(get_table_download_link(all_data_list, clean=True), unsafe_allow_html=True)
 
