@@ -139,7 +139,11 @@ if st.button("Clean-up HPLC Data"):
                 st.write('Please ensure that only thermo or agilent files are processed together')
     all_data_list = pd.concat(all_data_list)
     st.subheader('Clean HPLC data')
-    st.dataframe(all_data_list)
+    try:
+        st.dataframe(all_data_list)
+    except Exception as e:
+        st.write('There was an error displaying the data in real time. However, you can still download the cleaned data using the link below. Please forward the error to jsamuel@ondemandpharma.com')
+        st.write(e)
     st.markdown(get_table_download_link(all_data_list, clean=True), unsafe_allow_html=True)
 
 #st.markdown(get_table_download_link(all_data_list, clean = True), unsafe_allow_html=True)
@@ -147,7 +151,7 @@ if st.button("Clean-up HPLC Data"):
 st.subheader('Upload a CSV file for IFM')
 ifm_file = st.file_uploader('Only one file at a time.',accept_multiple_files=False)
 round_num = st.selectbox('How many digits would you like RT to be rounded by?', (1, 2, 3, 4, 5), index = 2)
-r = st.selectbox('What range would you like to bucket values?', (0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1), index = 4)
+r = st.selectbox('What range would you like to bucket values?', (0.001, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1), index = 1)
 if st.button('Impurity fate mapping?'):
     series = pd.read_csv(ifm_file, dtype = object, header = 0)
     lst = series['RRT (ISTD)'].tolist()  # represents list of relative retention times, make sure to round prior
