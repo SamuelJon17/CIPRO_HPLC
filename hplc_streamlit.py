@@ -103,7 +103,7 @@ if st.button("Clean-up HPLC Data"):
                         series['excel sheet'] = uploaded_file.name.split('.')[0]
                         series['page number'] = k
                         all_data_list.append(series)
-                    except XLRDError:
+                    except:
                         print('Page {} does not exist in Excel spreadsheet {}'.format(k, uploaded_file.name))
                         break
 
@@ -142,8 +142,8 @@ if st.button("Clean-up HPLC Data"):
     try:
         st.dataframe(all_data_list)
     except Exception as e:
-        st.write('There was an error displaying the data in real time. However, you can still download the cleaned data using the link below. Please forward the error to jsamuel@ondemandpharma.com')
-        st.write(e)
+        st.write('There was an error displaying the data in real time. However, you can still download the cleaned data using the link below.')
+        #st.write(e)
     st.markdown(get_table_download_link(all_data_list, clean=True), unsafe_allow_html=True)
 
 #st.markdown(get_table_download_link(all_data_list, clean = True), unsafe_allow_html=True)
@@ -152,7 +152,7 @@ st.subheader('Upload a CSV file for IFM')
 ifm_file = st.file_uploader('Only one file at a time.',accept_multiple_files=False)
 round_num = st.selectbox('How many digits would you like RT to be rounded by?', (1, 2, 3, 4, 5), index = 2)
 r = st.selectbox('What range would you like to bucket values?', (0.001, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1), index = 1)
-if st.button('Impurity fate mapping?'):
+if st.button('Impurity fate mapping'):
     series = pd.read_csv(ifm_file, dtype = object, header = 0)
     lst = series['RRT (ISTD)'].tolist()  # represents list of relative retention times, make sure to round prior
     ranges = [rrt_range(lst[0], range_=r, rounding_num=round_num)]  # represents ranges of unique list
@@ -185,31 +185,35 @@ if st.button('Impurity fate mapping?'):
                 test_list[test_list.index(j)] = round(float(subset[key][:, 1].tolist()[idx2]),2)
         final_dict.update({key: test_list})
     final_rrt_lst = [round(float(x), round_num) for x in new_set]
-    df = pd.DataFrame.from_dict(final_dict, orient='index', columns=final_rrt_lst)
+
+    rrt_to_names = [list(set(series.loc[series['RRT (ISTD)'] == str(i)]['Compound'].tolist())) for i in new_set]
+    rrt_to_names = [item for items in rrt_to_names for item in items]
+
+    st.subheader('Impurity Fate Mapping')
+    df = pd.DataFrame.from_dict(final_dict, orient='index', columns=final_rrt_lst, dtype=object)
+    # Used to add a row with column names. However running into datatype issues with multi dtypes in a single column
+    df_names = df.append(pd.DataFrame([rrt_to_names], columns=df.columns, index=['Compound_name']).fillna('n.a.').astype(object))
     try:
         df = df.reindex(sorted(df.columns), axis=1)
         df['Total LCAP'] = df.sum(axis=1)
-        # check = []
-        # for k in subset.keys():
-        #     subset[k] = pd.DataFrame(subset[k])
-        #     subset[k] = subset[k].append(subset[k].sum(numeric_only=True), ignore_index=True)  # Adds a sum row to each sample
-        #     if round(df.loc[k, 'Total LCAP'], 2) != round(subset[k].loc[len(subset[k]) - 1, 1], 2):
-        #         check.append(k)
-        #
-        # if len(check) >= 1:
-        #     # CGREEN = '\033[1;32;40m'
-        #     # CEND = '\033[1;30;46m'
-        #     #st.write(('\033[31m' + 'Total LCAP of samples {} do NOT match with raw data. Please try smaller range, bigger rounding, or both' + '\033[30m').format(check))
-        #     st.markdown(
-        #         'Total LCAP of samples' + '<span style="color:red"> {} </span>'.format(
-        #             check) + ' do NOT match with raw data. Please try smaller range, bigger rounding, or both', unsafe_allow_html=True)
+
+        df_names = df_names.reindex(sorted(df_names.columns), axis=1)
+        df_values = df_names.iloc[0:df_names.shape[0] - 1]
+        df_names['Total LCAP'] = df_values.sum(axis=1)
     except ValueError:
         st.write('Error at rounding {} and range {}'.format(round_num, r))
-    st.subheader('Impurity Fate Mapping')
-    st.dataframe(df)
-    st.markdown(get_table_download_link(df, clean=False), unsafe_allow_html=True)
+    try:
+        st.write(df_names)
+        st.write('IFM with compound names')
+        st.markdown(get_table_download_link(df_names, clean=False), unsafe_allow_html=True)
+    except:
+        st.write(
+            'There was an error displaying the data with compound names in real time. However, you can still download the IFM data with names using the link below data.')
+        st.write(df)
+        st.write('IFM with compound names')
+        st.markdown(get_table_download_link(df_names, clean=False), unsafe_allow_html=True)
 
 need_help = st.expander('Need help? 👉')
 with need_help:
-    st.markdown("Having trouble with either modules? Feel free to " + '<a href="mailto:jsamuel@ondemandpharma.com">contact</a>' + ' me!', unsafe_allow_html=True)
+    st.markdown("Having trouble with either modules? Feel free to contact " + '<a href="mailto:jsamuel@ondemandpharma.com">Jon</a>' + ' or '+ '<a href="mailto:LTruong@ondemandpharma.com ">Loan.</a>', unsafe_allow_html=True)
     #st.markdown('<a href="mailto:jsamuel@ondemandpharma.com">Email</a>', unsafe_allow_html=True)
