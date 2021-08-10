@@ -1,8 +1,11 @@
 # CIPRO_HPLC
 
 ## Getting started with Streamlit
-* Download streamlit using the command terminal type **pip install streamlit** https://pypi.org/project/streamlit/
-* Ensure that pandas is installed, **pip install pandas** https://pypi.org/project/pandas/
+* You will need to ensure the following packages are installed on your computer
+  * Streamlit **pip install streamlit** https://pypi.org/project/streamlit/
+  * Pandas **pip install pandas** https://pypi.org/project/pandas/
+  * Openpyxl **pip install openpyxl** https://pypi.org/project/openpyxl/
+  * Xlrd **pip install xlrd** https://pypi.org/project/xlrd/
 * Download the repository by clicking the download button on the repo or by going in the terminal and adding git clone https://github.com/SamuelJon17/CIPRO_HPLC.git
 * Maneuver towards the repository on your terminal. For example for me, using a MAC, I would type **cd Desktop/ODP/Code/GitHub_Repo/CIPRO_HPLC** but note your path might differ. The same input should be the same for windows: https://www.howtogeek.com/659411/how-to-change-directories-in-command-prompt-on-windows-10/
 * Once your directory is the ../CIPRO_HPLC type **streamlit run hplc_streamlit.py** and you should be able to access the HPLC_clean and IFM app on your local port. For example, mine is on http://localhost:8501. Note, this is a working prototype so there might be bugs. Feel free to message me if there are any.
