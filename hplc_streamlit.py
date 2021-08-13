@@ -11,25 +11,31 @@ from xlrd import XLRDError
 import base64
 
 col1, mid, col2 = st.columns([10,1,25])
-
 with col1:
     st.image('supporting_docs/odp_logo.png', width=200)
 with col2:
     st.title('Cleaning HPLC Data And Impurity Fate Mapping')
 
-def get_table_download_link(df, clean = True):
+def get_table_download_link(df, file_name, clean = 'y'):
     """Generates a link allowing the data in a given panda dataframe to be downloaded
     in:  dataframe
     out: href string
     """
-    if clean:
+    if clean == 'y' or clean == 'thresh':
         csv = df.to_csv(index=False)
         b64 = base64.b64encode(csv.encode()).decode()  # some strings <-> bytes conversions necessary here
-        href =f'<a href="data:file/csv;base64,{b64}" download="HPLC_clean_data.csv">Download Clean HPLC CSV file</a>'
-    else:
+        #href =f'<a href="data:file/csv;base64,{b64}" download="HPLC_clean_data.csv">Download Clean HPLC CSV file</a>'
+        if clean == 'y':
+            extension = 'Cleaned'
+            href = f'<a href="data:file/csv;base64,{b64}" download="{file_name}_{extension}.csv">Download Clean HPLC CSV file</a>'
+        elif clean == 'thresh':
+            extension = 'Cleaned&Threshold'
+            href = f'<a href="data:file/csv;base64,{b64}" download="{file_name}_{extension}.csv">Download Clean & Removed LCAP HPLC CSV file</a>'
+    elif clean == 'n':
         csv = df.to_csv(index=True)
         b64 = base64.b64encode(csv.encode()).decode()  # some strings <-> bytes conversions necessary here
-        href = f'<a href="data:file/csv;base64,{b64}" download="HPLC_IFM_data.csv">Download IFM CSV file</a>'
+        href = f'<a href="data:file/csv;base64,{b64}" download="{file_name}_IFM.csv">Download IFM CSV file</a>'
+        #href = f'<a href="data:file/csv;base64,{b64}" download="HPLC_IFM_data.csv">Download IFM CSV file</a>'
     return href
 
 def rrt_range(rrt, range_ = None, rounding_num = None):
@@ -41,16 +47,35 @@ def rrt_range(rrt, range_ = None, rounding_num = None):
 def average(lst):
     return sum(lst) / len(lst)
 
-#st.title('Cleaning HPLC Data And Impurity Fate Mapping')
+def drop_lcap(dataframe, threshold = 0.2):
+    #file = pd.read_csv(dataframe, dtype = object, header = 0)
+    file = dataframe
+    file = file.rename(columns = {'Peak\nArea\nPercent':'Peak_Area_Percent'})
+    file_drop = file.groupby('id').apply(lambda x: x.loc[x.Peak_Area_Percent >= float(threshold)]).reset_index(drop=True)
+    file_drop['Peak_Area_Percent'] = pd.to_numeric(file_drop["Peak_Area_Percent"])
+    file_other = 100 - file_drop.groupby('id')['Peak_Area_Percent'].agg('sum')
+    file_other = pd.DataFrame({'id':file_other.index, 'Peak_Area_Percent':file_other.values,
+                               'Peak\nRetention\nTime':999, 'RRT (ISTD)': str(999), 'Compound': 'Other', 'Area':999,
+                               'Height':999, 'Compound Amount': 000})
+    file = pd.concat([file_drop, file_other], ignore_index = True).rename(columns = {'Peak_Area_Percent': 'Peak\nArea\nPercent'})
+    return file
 
+################################
+# Clean HPLC Module
+################################
 st.subheader('Upload Excel File(s) for Cleaning')
 files = st.file_uploader('Multiple files can be added at once', accept_multiple_files=True )
-
+output_name = st.text_input('Please enter the name you would like for the returned dataset: ')
+if output_name == '':
+    output_name = 'HPLC_Clean_Data'
 system = st.selectbox('Are you using an agilent or thermo system?',('agilent', 'thermo'))
-reference_chem = st.selectbox('Please select a reference chemical for RRT', ('Midazolam', 'CIPRO', 'Cis'), index = 2)
 
+reference_chem = st.selectbox('Please select a reference chemical for RRT', ('Midazolam', 'CIPRO', 'Cis', 'Cis Besylate'), index = 3)
 if st.button("Other reference?"):
     reference_chem = st.text_input("Input a reference chemical not listed from the dropdown or a specific RT value (ex. 2.11)?")
+
+remove_lcap = st.selectbox('Would you like to remove all LCAPs below a threshold?',('yes', 'no'), index = 0)
+lcap_thresh = st.text_input("Please input the minimum LCAP value allowed: ")
 
 if st.button("Clean-up HPLC Data"):
     if files is not None:
@@ -134,22 +159,29 @@ if st.button("Clean-up HPLC Data"):
                     data = data[['Peak\nRetention\nTime', 'RRT (ISTD)', 'Peak\nArea\nPercent', 'Area', 'Height', 'Compound',
                                  'id', 'excel_sheet']]
                 all_data_list.append(data)
-
             else:
                 st.write('Please ensure that only thermo or agilent files are processed together')
     all_data_list = pd.concat(all_data_list)
     st.subheader('Clean HPLC data')
+    if remove_lcap == 'yes':
+        drop_lcap_df = drop_lcap(all_data_list, lcap_thresh)
+        st.markdown(get_table_download_link(drop_lcap_df, file_name=output_name,clean='thresh'), unsafe_allow_html=True)
     try:
         st.dataframe(all_data_list)
+        st.dataframe(drop_lcap_df)
     except Exception as e:
         st.write('There was an error displaying the data in real time. However, you can still download the cleaned data using the link below.')
         #st.write(e)
-    st.markdown(get_table_download_link(all_data_list, clean=True), unsafe_allow_html=True)
+    st.markdown(get_table_download_link(all_data_list, file_name=output_name, clean='y'), unsafe_allow_html=True)
 
-#st.markdown(get_table_download_link(all_data_list, clean = True), unsafe_allow_html=True)
-
+################################
+# IFM Module
+################################
 st.subheader('Upload a CSV file for IFM')
 ifm_file = st.file_uploader('Only one file at a time.',accept_multiple_files=False)
+output_name_2 = st.text_input('Please enter the name you would like for the returned IFM dataset: ')
+if output_name_2 == '':
+    output_name_2 = 'IFM_Data'
 round_num = st.selectbox('How many digits would you like RT to be rounded by?', (1, 2, 3, 4, 5), index = 2)
 r = st.selectbox('What range would you like to bucket values?', (0.001, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1), index = 1)
 if st.button('Impurity fate mapping'):
@@ -186,11 +218,19 @@ if st.button('Impurity fate mapping'):
         final_dict.update({key: test_list})
     final_rrt_lst = [round(float(x), round_num) for x in new_set]
 
+    # Some reason, 999 is being read as a float, 999.0 so when performing:
+    # [list(set(series.loc[series['RRT (ISTD)'] == str(i)]['Compound'].tolist())) for i in new_set]
+    # str(i) for ii in new_set is '999.0' and is not the same as series['RRT (ISTD)'] == '999'
+    # This is a workaround
+    new_set = list(new_set)
+    new_set[-1] = str(int(new_set[-1]))
+    new_set = set(new_set)
+
     rrt_to_names = [list(set(series.loc[series['RRT (ISTD)'] == str(i)]['Compound'].tolist())) for i in new_set]
     rrt_to_names = [item for items in rrt_to_names for item in items]
-
     st.subheader('Impurity Fate Mapping')
     df = pd.DataFrame.from_dict(final_dict, orient='index', columns=final_rrt_lst, dtype=object)
+
     # Used to add a row with column names. However running into datatype issues with multi dtypes in a single column
     df_names = df.append(pd.DataFrame([rrt_to_names], columns=df.columns, index=['Compound_name']).fillna('n.a.').astype(object))
     try:
@@ -205,15 +245,16 @@ if st.button('Impurity fate mapping'):
     try:
         st.write(df_names)
         st.write('IFM with compound names')
-        st.markdown(get_table_download_link(df_names, clean=False), unsafe_allow_html=True)
+        st.markdown(get_table_download_link(df_names, file_name=output_name_2, clean='n'), unsafe_allow_html=True)
     except:
         st.write(
             'There was an error displaying the data with compound names in real time. However, you can still download the IFM data with names using the link below data.')
         st.write(df)
-        st.write('IFM with compound names')
-        st.markdown(get_table_download_link(df_names, clean=False), unsafe_allow_html=True)
+        st.markdown(get_table_download_link(df_names, file_name= output_name_2, clean='n'), unsafe_allow_html=True)
 
+################################
+# Need Help Module
+################################
 need_help = st.expander('Need help? 👉')
 with need_help:
     st.markdown("Having trouble with either modules? Feel free to contact " + '<a href="mailto:jsamuel@ondemandpharma.com">Jon</a>' + ' or '+ '<a href="mailto:LTruong@ondemandpharma.com ">Loan.</a>', unsafe_allow_html=True)
-    #st.markdown('<a href="mailto:jsamuel@ondemandpharma.com">Email</a>', unsafe_allow_html=True)
