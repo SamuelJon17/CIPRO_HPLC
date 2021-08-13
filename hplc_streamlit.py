@@ -70,13 +70,14 @@ if output_name == '':
     output_name = 'HPLC_Clean_Data'
 system = st.selectbox('Are you using an agilent or thermo system?',('agilent', 'thermo'))
 
-reference_chem = st.selectbox('Please select a reference chemical for RRT', ('Midazolam', 'CIPRO', 'Cis', 'Cis Besylate', 'Other'), index = 3)
+reference_chem = st.selectbox('Please select a reference chemical for RRT', ('Midazolam', 'CIPRO', 'Cis', 'Cis Besylate', 'Other'), index = 2)
 if reference_chem == 'Other':
     reference_chem = st.text_input(
         "Input a reference chemical not listed from the dropdown or a specific RT value (ex. 2.11)?")
 
-remove_lcap = st.selectbox('Would you like to remove all LCAPs below a threshold?',('yes', 'no'), index = 0)
-lcap_thresh = st.text_input("Please input the minimum LCAP value allowed: ")
+remove_lcap = st.selectbox('Would you like to remove all LCAPs below a threshold?',('yes', 'no'), index = 1)
+if remove_lcap == 'yes':
+    lcap_thresh = st.text_input("Please input the minimum LCAP value allowed: ")
 
 if st.button("Clean-up HPLC Data"):
     if files is not None:
