@@ -224,13 +224,11 @@ if st.button('Impurity fate mapping'):
     # [list(set(series.loc[series['RRT (ISTD)'] == str(i)]['Compound'].tolist())) for i in new_set]
     # str(i) for i in new_set is '999.0' and is not the same as series['RRT (ISTD)'] == '999'
     # This is a workaround
-    try:
-        new_set = list(new_set)
-        new_set[-1] = str(int(new_set[-1]))
-        new_set = set(new_set)
-    except ValueError:
-        new_set = set(new_lst)
-
+    if 999.0 in new_set:
+        new_set = ['999' if x==999 else x for x in new_set]
+        # new_set = list(new_set)
+        # new_set[-1] = str(int(new_set[-1]))
+        # new_set = set(new_set)
     rrt_to_names = [list(set(series.loc[series['RRT (ISTD)'] == str(i)]['Compound'].tolist())) for i in new_set]
     rrt_to_names = [item for items in rrt_to_names for item in items]
     st.subheader('Impurity Fate Mapping')
