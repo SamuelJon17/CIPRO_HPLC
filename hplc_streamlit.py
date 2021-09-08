@@ -50,7 +50,7 @@ def average(lst):
 def drop_lcap(dataframe, threshold = 0.2):
     #file = pd.read_csv(dataframe, dtype = object, header = 0)
     file = dataframe
-    file = file.rename(columns = {'Peak\nArea\nPercent':'Peak_Area_Percent'})
+    file.rename({'Peak\nArea\nPercent':'Peak_Area_Percent', 'Peak Area\nPercent':'Peak_Area_Percent'}, axis =1, inplace=True)
     file_drop = file.groupby('id').apply(lambda x: x.loc[x.Peak_Area_Percent >= float(threshold)]).reset_index(drop=True)
     file_drop['Peak_Area_Percent'] = pd.to_numeric(file_drop["Peak_Area_Percent"])
     file_other = 100 - file_drop.groupby('id')['Peak_Area_Percent'].agg('sum')
@@ -79,6 +79,12 @@ remove_lcap = st.selectbox('Would you like to remove all LCAPs below a threshold
 if remove_lcap == 'yes':
     lcap_thresh = st.text_input("Please input the minimum LCAP value allowed: ")
 
+
+if system == 'agilent':
+    selectivity = st.selectbox('Would you like to only like to clean certain files? i.e. only R5? Note, only applicable for Agilent Systems',('yes', 'no'), index = 1)
+    if selectivity == 'yes':
+        selectivity_name = st.text_input("Please input the compound you want cleaned: ")
+
 if st.button("Clean-up HPLC Data"):
     if files is not None:
         all_data_list = []
@@ -86,8 +92,10 @@ if st.button("Clean-up HPLC Data"):
             if system == 'agilent':
                 for k in range(1, 999):
                     sheetname = 'Page ' + str(k)
+
                     try:
                         series = pd.read_excel(uploaded_file, dtype = object, sheet_name = sheetname, header = None, index_col = None)
+
                         if type(series.at[2, 0]) is str:
                             identifcation = series.at[2, 4]
                             if 'blank' in identifcation.lower():
@@ -126,6 +134,11 @@ if st.button("Clean-up HPLC Data"):
                         except:
                             series['RRT (ISTD)'] = series['Peak\nRetention\nTime']
 
+                        if selectivity_name != '':
+                            if selectivity_name.lower() not in identifcation.lower():
+                                continue
+                            st.write(identifcation)
+                            st.write(selectivity_name.lower() in identifcation.lower())
                         series['id'] = identifcation
                         series['excel sheet'] = uploaded_file.name.split('.')[0]
                         series['page number'] = k
@@ -163,18 +176,22 @@ if st.button("Clean-up HPLC Data"):
                 all_data_list.append(data)
             else:
                 st.write('Please ensure that only thermo or agilent files are processed together')
-    all_data_list = pd.concat(all_data_list)
-    st.subheader('Clean HPLC data')
-    if remove_lcap == 'yes':
-        drop_lcap_df = drop_lcap(all_data_list, lcap_thresh)
-        st.markdown(get_table_download_link(drop_lcap_df, file_name=output_name,clean='thresh'), unsafe_allow_html=True)
-    try:
-        st.dataframe(all_data_list)
-        st.dataframe(drop_lcap_df)
-    except Exception as e:
-        st.write('There was an error displaying the data in real time. However, you can still download the cleaned data using the link below.')
-        #st.write(e)
-    st.markdown(get_table_download_link(all_data_list, file_name=output_name, clean='y'), unsafe_allow_html=True)
+                break
+    if len(all_data_list) == 0:
+        st.write('No objects to concatenate, please ensure that the proper items were selected. Note if using an Aglient system you might have to resave the excel spreadsheet and upload those to the clean-up module.')
+    else:
+        all_data_list = pd.concat(all_data_list)
+        st.subheader('Clean HPLC data')
+        if remove_lcap == 'yes':
+            drop_lcap_df = drop_lcap(all_data_list, lcap_thresh)
+            st.markdown(get_table_download_link(drop_lcap_df, file_name=output_name,clean='thresh'), unsafe_allow_html=True)
+        try:
+            st.dataframe(all_data_list)
+            st.dataframe(drop_lcap_df)
+        except Exception as e:
+            st.write('There was an error displaying the data in real time. However, you can still download the cleaned data using the link below.')
+            #st.write(e)
+        st.markdown(get_table_download_link(all_data_list, file_name=output_name, clean='y'), unsafe_allow_html=True)
 
 ################################
 # IFM Module
