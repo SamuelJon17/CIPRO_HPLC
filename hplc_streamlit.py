@@ -201,7 +201,7 @@ ifm_file = st.file_uploader('Only one file at a time.',accept_multiple_files=Fal
 output_name_2 = st.text_input('Please enter the name you would like for the returned IFM dataset: ')
 if output_name_2 == '':
     output_name_2 = 'IFM_Data'
-round_num = st.selectbox('How many digits would you like RT to be rounded by?', (1, 2, 3, 4, 5), index = 2)
+round_num = st.selectbox('How many digits would you like RRT to be rounded by?', (1, 2, 3, 4, 5), index = 2)
 r = st.selectbox('What range would you like to bucket values?', (0.001, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1), index = 1)
 if st.button('Impurity fate mapping'):
     series = pd.read_csv(ifm_file, dtype = object, header = 0)
@@ -278,3 +278,79 @@ if st.button('Impurity fate mapping'):
 need_help = st.expander('Need help? 👉')
 with need_help:
     st.markdown("Having trouble with either modules? Feel free to contact " + '<a href="mailto:jsamuel@ondemandpharma.com">Jon</a>' + ' or '+ '<a href="mailto:LTruong@ondemandpharma.com ">Loan.</a>', unsafe_allow_html=True)
+
+clean_faq = st.expander('Common Clean-Module FAQ')
+with clean_faq:
+    """
+    *** 
+    #### **Clean Module**
+    1. **I receive an error message when using Thermo reports.**
+    
+        Ensure that the file saved from the HPLC computer has the *Integration* sheet when saving as an excel spreadsheet.
+    
+    2. **I receive an error message when using Agilent reports.**
+    
+        For some reason, when exporting files from Agilent systems, an *OpenPyxl* source error appears due to faulty reading using *pandas.read_excel()*. Based on a [StackOverflow Report](https://stackoverflow.com/questions/46150893/error-when-trying-to-use-module-load-workbook-from-openpyxl)
+        there appears to be some styling done on Agilent systems that corrupts the output file. To circumvent this, if you re-save (save_as) your excel spreadsheets the problem is removed. My apologies for the inconvenience. 
+    
+    3. **What is *reference chemical for RRT* feature?**
+    
+        Because each run has slight variations in retention time, for the impurity fate mapping grouping process, it is better to group based on a relative compound / value rather than just retention time.
+        This feature allows you to choose a chemical, listed within the HPLC report (case-sensitive), or specific retention time value (i.e. 1.00) to use as reference.
+    
+    4. **What is *remove LCAP below threshold value* feature?**
+    
+        This is also a nice feature prior to importing to the IFM module. If your reports are riddled with very small peaks due potentially due to processing errors,
+        you can remove those values and re-categorize them as *other*
+    
+    5. **What is this *999* I see in my results?**
+    
+        If you used the remove LCAP below threshold value feature, 999 is a place holder for *other* in the IFM module. 
+    
+    6. **What is the *clean certain files* feature for Agilent systems?**
+    
+        Because Agilent reports HPLC results on a single excel file for numerous entries, a user might only want to extract out information from a specific entry. 
+        Specifically, this feature looks at the sample name, i.e. XXX-21-001-R5, and returns a cleaned/concatenated spreadsheet of entry of interest. 
+        For example, if I have XXX-21-001-R5-1, XXX-21-001-R5-2, XXX-21-001-CAU-1 and want only r5 results, I would type r5 into the text box 
+        and only be returned XXX-21-001-R5-1 & XXX-21-001-R5-2. Note this is only useful for Agilent systems since Thermo automatically separates 
+        each entry as its own excel file. 
+    ***  
+    """
+ifm_faq = st.expander('Common IFM-Module FAQ')
+with ifm_faq:
+    """
+    *** 
+    #### **Impurity Fate Map Module**
+    1. **How come I receive an error?**
+    
+        Ensure that you are uploading the clean file downloaded from the clean module and not the raw HPLC report. If you are and still receiving issues, email Jon.
+    
+    2. **What is the *RRT to round by* feature?**
+    
+        When running multiple samples for HPLC, there are slight variations within retention times that otherwise would be considered the same compound. 
+        Within the clean module, referencing based on a single compound or value is the first step in tackling this problem.
+        Next would be rounding the RRT to a value such that similar enough compounds are grouped together.
+        For example, if compound A shows up at RRT 1.0008 for run 1 and RRT 1.0009 for run 2, rounding to the third decimal place would help group these compounds as
+        1.001. However, there is drawbacks if you set the rounding to low such as round to 1 as many compounds that shouldn't share the same RRT might be grouped as one. 
+        It's a trade-off system but generally found that rounding to 3 is sufficient. 
+    
+    3. **What does *range you would like to bucketize* mean?**
+    
+        Similar to the RRT rounding feature, we might want to group items that are within a certain +/- range of RRT.
+        For example, if for compound A in run 1 has RRT 1.008 and run 2 has RRT 1.011 but should be the same, I'd want my range to group as 
+        at least +/- 0.003 such that these values are considered the same. Similar to the rounding feature, there is a trade-off where
+        if the range is too large, values that shouldn't be grouped become grouped and if too small, no grouping occurs. 0.005 was found to be the most sufficient when paired with round to 3.
+        To have the optimal IFM output it's best to utilize the cleaning based on a reference chemical value feature, removing values below a threshold feature that aren't impurities but rather noise from processing, 
+        and perform a rounding and group-by range feature.
+        
+    4. **How come some of my runs don't add up to 99.9-100.1%?**
+    
+        If your values do not add up to 99.9-100.1% LCAP, you might need to change the rounding or group-by range value. It is possible that
+        some values are being grouped because they are very close to each other but being considered as one by the algorithm. 
+        
+    5. **Is it possible to see what compounds correspond to which RRT?**
+    
+        Yes, if available within the HPLC report, when you download the IFM file, there will be a row that contains a chemical that corresponds
+        to the RRT within that column. If one was not present within the report, it will appear as n.a. 
+     ***    
+    """
