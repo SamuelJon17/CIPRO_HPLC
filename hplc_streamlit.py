@@ -14,8 +14,8 @@ username = st.sidebar.text_input("User Name")
 password = st.sidebar.text_input("Password",type='password')
 login = st.sidebar.button('login')
 
-#if username == st.secrets["db_username"] & password == st.secrets["db_password"]:
-if (login) & (username.lower() == 'odp_user') & (password == 'Open123$'):
+if (username == st.secrets["db_username"]) & (password == st.secrets["db_password"]):
+#if (login) & (username.lower() == 'odp_user') & (password == 'Open123$'):
     st.sidebar.write('Welcome odp_user!')
     col1, mid, col2 = st.columns([10,1,25])
     with col1:
