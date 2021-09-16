@@ -7,7 +7,6 @@ Created on Thu Mar  4 10:38:10 2021
 """
 import streamlit as st
 import pandas as pd
-from xlrd import XLRDError
 import base64
 
 col1, mid, col2 = st.columns([10,1,25])
