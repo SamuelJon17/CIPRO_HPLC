@@ -108,8 +108,13 @@ def thermo1(uploaded_file, reference_chem):
 
     data = data[~data['No. '].isin(['n.a.', 'Total:'])]
     data['id'] = identification
-    data['excel_sheet'] = \
-    pd.read_excel(uploaded_file, dtype=object, sheet_name='Overview', header=None, index_col=None).at[3, 2]
+    try:
+        data['excel_sheet'] = pd.read_excel(uploaded_file, dtype=object, sheet_name='Overview', header=None, index_col=None).at[3, 2]
+    except:
+        try:
+            data['excel_sheet'] = '-'.join(identification.split('-')[0:3])
+        except:
+            data['excel_sheet'] = identification
     data = normRRT(data, reference_chem=reference_chem, thermo=True)
     data = data.rename(columns={'Peak Name': 'Compound', 'RT': 'Peak_Retention_Time', 'RRT': 'RRT (ISTD)',
                                 'LCAP ': 'Peak_Area_Percent', 'Area ': 'Area',
@@ -252,7 +257,7 @@ if st.button("Clean-up HPLC Data"):
         st.subheader('Clean HPLC data')
         if remove_lcap == 'yes':
             drop_lcap_df = drop_lcap(all_data_list, lcap_thresh)
-            st.markdown(get_table_download_link(drop_lcap_df, file_name=output_name, clean='thresh'),
+            st.markdown(get_table_download_link(drop_lcap_df, file_name=output_name,group_by = None, clean='thresh'),
                         unsafe_allow_html=True)
         try:
             st.dataframe(all_data_list)
@@ -261,7 +266,7 @@ if st.button("Clean-up HPLC Data"):
             st.write(
                 'There was an error displaying the data in real time. However, you can still download the cleaned data using the link below.')
             # st.write(e)
-        st.markdown(get_table_download_link(all_data_list, file_name=output_name, clean='y'), unsafe_allow_html=True)
+        st.markdown(get_table_download_link(all_data_list, file_name=output_name, group_by = None, clean='y'), unsafe_allow_html=True)
 
 ################################
 # IFM Module
