@@ -158,6 +158,8 @@ def agilent(uploaded_file, sheetname, reference_chem):
         identifcation = series.at[2, 4]
         if 'blank' in identifcation.lower():
             identifcation = identifcation + ' ' + str(uploaded_file.name.split('.')[0]) + ' ' + str(k)
+        else:
+            identifcation = identifcation + ' page ' + str(k)
         return identifcation
     else:  # Dealing with different Agilents [Beyonce]
         try:
@@ -165,6 +167,8 @@ def agilent(uploaded_file, sheetname, reference_chem):
                 identifcation = series.at[6, 5]
                 if 'blank' in identifcation.lower():
                     identifcation = identifcation + ' ' + str(uploaded_file.name.split('.')[0]) + ' ' + str(k)
+                else:
+                    identifcation = identifcation + ' page ' + str(k)
                 return identifcation
             elif 'signal' not in str(series.at[0, 0]).lower():
                 series = series.iloc[1:]  # Remove the first row
@@ -343,10 +347,13 @@ if st.button('Impurity fate mapping'):
 
     try:
         df = df.reindex(sorted(df.columns), axis=1)
-        df['Total ' + group_by] = df.sum(axis=1)
+        sum = df.sum(axis=1)
+        df['Total ' + group_by] = sum
         df_names = df_names.reindex(sorted(df_names.columns), axis=1)
-        df_values = df_names.iloc[0:df_names.shape[0] - 1]
-        df_names['Total ' + group_by] = df_values.sum(axis=1, numeric_only=True)
+        # df_values = df_names.iloc[1:df_names.shape[0]]
+        sum_name = sum.tolist()
+        sum_name.insert(0, 0)
+        df_names['Total ' + group_by] = sum_name
     except ValueError:
         st.write('Error at rounding {} and range {}'.format(round_num, r))
     try:
