@@ -214,12 +214,18 @@ if remove_lcap == 'yes':
     lcap_thresh = st.text_input("Please input the minimum LCAP value allowed: ")
 
 selectivity_name = ''
+ignore_names = ''
 if system == 'agilent':
     selectivity = st.selectbox(
         'Would you like to only like to clean certain files? i.e. only R5? Note, only applicable for Agilent Systems',
         ('yes', 'no'), index=1)
     if selectivity == 'yes':
-        selectivity_name = st.text_input("Please input the compound you want cleaned: ")
+        selectivity_name = st.text_input("Please input the compound(s) you want cleaned. If entering more than one please separate with a comma with no space in between. For example, 'r5,blank' :")
+    ignore = st.selectbox(
+        'Would you like to ignore certain names? For example, ignore blanks. Note, only applicable for Agilent Systems',
+        ('yes', 'no'), index=1)
+    if ignore == 'yes':
+        ignore_names = st.text_input("Please input the compound(s) you want to ignore. If entering more than one please separate with a comma with no space in between. For example, 'r5,blank' :")
 
 if st.button("Clean-up HPLC Data"):
     if files is not None:
@@ -235,7 +241,13 @@ if st.button("Clean-up HPLC Data"):
                             continue
                         else:
                             if selectivity_name != '':
-                                if selectivity_name.lower() not in identifcation.lower():
+                                selectivity_name_list = list(map(str.lower,selectivity_name.split(',')))
+                                #if selectivity_name.lower() not in identifcation.lower():
+                                if not any(substring in identifcation.lower() for substring in selectivity_name_list):
+                                    continue
+                            if ignore_names != '':
+                                ignore_names_list = list(map(str.lower,ignore_names.split(',')))
+                                if any(substring in identifcation.lower() for substring in ignore_names_list):
                                     continue
                             id_series['id'] = identifcation
                             id_series['excel_sheet'] = uploaded_file.name.split('.')[0]
@@ -271,6 +283,55 @@ if st.button("Clean-up HPLC Data"):
                 'There was an error displaying the data in real time. However, you can still download the cleaned data using the link below.')
             # st.write(e)
         st.markdown(get_table_download_link(all_data_list, file_name=output_name, group_by = None, clean='y'), unsafe_allow_html=True)
+
+################################
+# Clean FAQ
+################################
+clean_faq = st.expander('Clean-Module FAQ')
+with clean_faq:
+    """
+    *** 
+    #### **Clean Module**
+    1. **I receive an error message when using Thermo reports.**
+
+        Ensure that the file saved from the HPLC computer has the *Integration* sheet when saving as an excel spreadsheet.
+
+    2. **I receive an error message when using Agilent reports.**
+
+        For some reason, when exporting files from Agilent systems, an *OpenPyxl* source error appears due to faulty reading using *pandas.read_excel()*. Based on a [StackOverflow Report](https://stackoverflow.com/questions/46150893/error-when-trying-to-use-module-load-workbook-from-openpyxl)
+        there appears to be some styling done on Agilent systems that corrupts the output file. To circumvent this, if you re-save (save_as) your excel spreadsheets the problem is removed. My apologies for the inconvenience. 
+
+    3. **How come I receive a message saying X page doesn't exist?**
+
+        The output for agilent systems are several sheets within a single excel file. The algorithm will loop from
+        page 1 to 999 until there is either an actual error or until the page doesn't exist. For examlpe,
+        if your excel spreadsheet has 35 pages, you should receive an error stating page 36 doesn't exist. In this case,
+        the algorithm is running okay and can disregard the message. In the same example, if you receive a message stating page 1-35 doesn't exist
+        then there is an actual problem with either the file or code. 
+
+    4. **What is *reference chemical for RRT* feature?**
+
+        Because each run has slight variations in retention time, for the impurity fate mapping grouping process, it is better to group based on a relative compound / value rather than just retention time.
+        This feature allows you to choose a chemical, listed within the HPLC report (case-sensitive), or specific retention time value (i.e. 1.00) to use as reference.
+
+    5. **What is *remove LCAP below threshold value* feature?**
+
+        This is also a nice feature prior to importing to the IFM module. If your reports are riddled with very small peaks due potentially due to processing errors,
+        you can remove those values and re-categorize them as *other*
+
+    6. **What is this *999* I see in my results?**
+
+        If you used the remove LCAP below threshold value feature, 999 is a place holder for *other* in the IFM module. 
+
+    7. **What is the *clean certain files* feature for Agilent systems?**
+
+        Because Agilent reports HPLC results on a single excel file for numerous entries, a user might only want to extract out information from a specific entry. 
+        Specifically, this feature looks at the sample name, i.e. XXX-21-001-R5, and returns a cleaned/concatenated spreadsheet of entry of interest. 
+        For example, if I have XXX-21-001-R5-1, XXX-21-001-R5-2, XXX-21-001-CAU-1 and want only r5 results, I would type r5 into the text box 
+        and only be returned XXX-21-001-R5-1 & XXX-21-001-R5-2. Note this is only useful for Agilent systems since Thermo automatically separates 
+        each entry as its own excel file. 
+    ***  
+    """
 
 ################################
 # IFM Module
@@ -356,6 +417,8 @@ if st.button('Impurity fate mapping'):
         df_names['Total ' + group_by] = sum_name
     except ValueError:
         st.write('Error at rounding {} and range {}'.format(round_num, r))
+    if group_by == 'Compound Amount':
+        df = df.loc[:, (df != 0).any(axis=0)]
     try:
         st.write(df_names)
         st.write('IFM with compound names')
@@ -367,52 +430,9 @@ if st.button('Impurity fate mapping'):
         st.markdown(get_table_download_link(df_names, file_name=output_name_2, group_by=group_by, clean='n'), unsafe_allow_html=True)
 
 ################################
-# Need Help Module
+# IFM FAQ
 ################################
-need_help = st.expander('Need help? 👉')
-with need_help:
-    st.markdown(
-        "Having trouble with either modules? Feel free to contact " + '<a href="mailto:jsamuel@ondemandpharma.com">Jon</a>' + ' or ' + '<a href="mailto:LTruong@ondemandpharma.com ">Loan.</a>',
-        unsafe_allow_html=True)
-
-clean_faq = st.expander('Common Clean-Module FAQ')
-with clean_faq:
-    """
-    *** 
-    #### **Clean Module**
-    1. **I receive an error message when using Thermo reports.**
-
-        Ensure that the file saved from the HPLC computer has the *Integration* sheet when saving as an excel spreadsheet.
-
-    2. **I receive an error message when using Agilent reports.**
-
-        For some reason, when exporting files from Agilent systems, an *OpenPyxl* source error appears due to faulty reading using *pandas.read_excel()*. Based on a [StackOverflow Report](https://stackoverflow.com/questions/46150893/error-when-trying-to-use-module-load-workbook-from-openpyxl)
-        there appears to be some styling done on Agilent systems that corrupts the output file. To circumvent this, if you re-save (save_as) your excel spreadsheets the problem is removed. My apologies for the inconvenience. 
-
-    3. **What is *reference chemical for RRT* feature?**
-
-        Because each run has slight variations in retention time, for the impurity fate mapping grouping process, it is better to group based on a relative compound / value rather than just retention time.
-        This feature allows you to choose a chemical, listed within the HPLC report (case-sensitive), or specific retention time value (i.e. 1.00) to use as reference.
-
-    4. **What is *remove LCAP below threshold value* feature?**
-
-        This is also a nice feature prior to importing to the IFM module. If your reports are riddled with very small peaks due potentially due to processing errors,
-        you can remove those values and re-categorize them as *other*
-
-    5. **What is this *999* I see in my results?**
-
-        If you used the remove LCAP below threshold value feature, 999 is a place holder for *other* in the IFM module. 
-
-    6. **What is the *clean certain files* feature for Agilent systems?**
-
-        Because Agilent reports HPLC results on a single excel file for numerous entries, a user might only want to extract out information from a specific entry. 
-        Specifically, this feature looks at the sample name, i.e. XXX-21-001-R5, and returns a cleaned/concatenated spreadsheet of entry of interest. 
-        For example, if I have XXX-21-001-R5-1, XXX-21-001-R5-2, XXX-21-001-CAU-1 and want only r5 results, I would type r5 into the text box 
-        and only be returned XXX-21-001-R5-1 & XXX-21-001-R5-2. Note this is only useful for Agilent systems since Thermo automatically separates 
-        each entry as its own excel file. 
-    ***  
-    """
-ifm_faq = st.expander('Common IFM-Module FAQ')
+ifm_faq = st.expander('IFM-Module FAQ')
 with ifm_faq:
     """
     *** 
@@ -450,7 +470,14 @@ with ifm_faq:
         to the RRT within that column. If one was not present within the report, it will appear as n.a. 
      ***    
     """
-
+################################
+# Need Help Module
+################################
+need_help = st.expander("Still can't find your answer? 👉")
+with need_help:
+    st.markdown(
+        "If you have any trouble please refer to the common FAQ first and if you don't find your solutin please Teams message or Email " + '<a href="mailto:jsamuel@ondemandpharma.com">Jon</a>' + ' or ' + '<a href="mailto:LTruong@ondemandpharma.com ">Loan.</a>' + ' Please submit a copy of the error message and file(s) that popped the error. ',
+        unsafe_allow_html=True)
 # elif (username == '') | (password == ''):
 #     st.warning("Please enter a username and password")
 # else:
