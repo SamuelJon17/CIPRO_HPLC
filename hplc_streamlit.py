@@ -19,11 +19,12 @@ import base64
 #if (login) & (username.lower() == 'odp_user') & (password == 'Open123$'):
 # st.sidebar.write('Welcome odp_user!')
 st.set_page_config(layout="wide")
-col1, mid, col2 = st.columns([10, 1, 25])
+col1, mid, col2 = st.columns([10, 25, 3.5])
 with col1:
-    st.image('supporting_docs/odp_logo.png', width=200)
+    st.image('supporting_docs/odp_logo.png', width=225)
 with col2:
-    st.title('Cleaning HPLC Data And Impurity Fate Mapping')
+    st.text('Updated 10/11/21')
+
 
 
 def get_table_download_link(df, file_name, group_by, clean='y'):
@@ -193,8 +194,9 @@ def agilent(uploaded_file, sheetname, reference_chem):
                                     'Peak Area\nPercent': 'Peak_Area_Percent'})
     return series
 
-colClean, colIFM = st.columns(2)
+colClean, spacer1, colIFM= st.columns((10,.35,10))
 
+colClean.title('HPLC Clean-Up')
 with colClean:
     ################################
     # Clean HPLC Module
@@ -335,7 +337,7 @@ with colClean:
             each entry as its own excel file. 
         ***  
         """
-
+colIFM.title('Impurity Fate Mapping')
 with colIFM:
     ################################
     # IFM Module
@@ -482,7 +484,7 @@ with need_help:
     st.markdown(
         "If you have any trouble please refer to the common FAQ first and if you don't find your solutin please Teams message or Email " + '<a href="mailto:jsamuel@ondemandpharma.com">Jon</a>' + ' or ' + '<a href="mailto:LTruong@ondemandpharma.com ">Loan.</a>' + ' Please submit a copy of the error message and file(s) that popped the error. ',
         unsafe_allow_html=True)
-updates = st.expander('Updates')
+updates = st.expander('Updates 🆕')
 with updates:
     """
     - October 11, 2021:
