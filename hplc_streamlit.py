@@ -482,6 +482,26 @@ with need_help:
     st.markdown(
         "If you have any trouble please refer to the common FAQ first and if you don't find your solutin please Teams message or Email " + '<a href="mailto:jsamuel@ondemandpharma.com">Jon</a>' + ' or ' + '<a href="mailto:LTruong@ondemandpharma.com ">Loan.</a>' + ' Please submit a copy of the error message and file(s) that popped the error. ',
         unsafe_allow_html=True)
+updates = st.expander('Updates')
+with updates:
+    """
+    - October 11, 2021:
+        - Updated layout for better user experience
+        - Added more information to FAQ
+        - For agilent systems, added an ignore sample name functionality. Could be useful if you want to ignore blanks, assays, etc (not case sensitive)
+        - For agilent systems, updated the selective sample name to include more than one sample name. Similar to above, this will be useful if
+        a user wants to only return samples with a certain name such as R3, R5 (not case sensitive)
+        - For Compound Amount in IFM, remove columns that are all zero (dead-space)
+    - October 8, 2021:
+        - For agilent systems, updated identification to include page numbers so multiple samples that share the same name
+        are not overwritten
+        - Bug fix in the LCAP summing column during IFM reporting
+        - For thermo reporting, added an ignore feature if the Overview page is not provided
+    - Septemberr 30, 2021:
+        - Expanded on IFM output to choose between LCAP, Area, Height or Compound Amount (Concentration)
+        - Included formatting for Thermo output from Lab 4 HPLC
+    """
+
 # elif (username == '') | (password == ''):
 #     st.warning("Please enter a username and password")
 # else:
