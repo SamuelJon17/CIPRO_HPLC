@@ -8,7 +8,7 @@ Created on Thu Mar  4 10:38:10 2021
 import streamlit as st
 import pandas as pd
 import base64
-
+import streamlit_analytics
 
 # username = st.sidebar.text_input("User Name")
 # password = st.sidebar.text_input("Password",type='password')
@@ -193,7 +193,7 @@ def agilent(uploaded_file, sheetname, reference_chem):
                                     'Peak\nArea\nPercent': 'Peak_Area_Percent',
                                     'Peak Area\nPercent': 'Peak_Area_Percent'})
     return series
-
+streamlit_analytics.start_tracking()
 colClean, spacer1, colIFM= st.columns((10,.35,10))
 
 colClean.title('HPLC Clean-Up')
@@ -503,7 +503,7 @@ with updates:
         - Expanded on IFM output to choose between LCAP, Area, Height or Compound Amount (Concentration)
         - Included formatting for Thermo output from Lab 4 HPLC
     """
-
+streamlit_analytics.stop_tracking(unsafe_password = 'BIGMEDS1!')
 # elif (username == '') | (password == ''):
 #     st.warning("Please enter a username and password")
 # else:
