@@ -23,7 +23,7 @@ col1, mid, col2 = st.columns([10, 25, 3.5])
 with col1:
     st.image('supporting_docs/odp_logo.png', width=225)
 with col2:
-    st.text('Updated 10/11/21')
+    st.text('Updated 02/10/22')
 
 
 
@@ -487,6 +487,8 @@ with need_help:
 updates = st.expander('Updates 🆕')
 with updates:
     """
+    - February 10, 2022:
+        - Requirement set Streamlit version to 1.4.0
     - October 11, 2021:
         - Updated layout for better user experience
         - Added more information to FAQ
