@@ -15,7 +15,7 @@ col1, mid, col2 = st.columns([10, 25, 3.5])
 with col1:
     st.image('supporting_docs/odp_logo.png', width=225)
 with col2:
-    st.text('Updated 07/30/22')
+    st.text('Version 1.05')
 
 
 
