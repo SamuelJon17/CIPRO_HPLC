@@ -148,8 +148,13 @@ def thermo2(uploaded_file, reference_chem):
                                 'Relative Area ': 'Peak_Area_Percent', 'Area ': 'Area',
                                 'Height ': 'Height', 'Relative Height ': 'Relative_Height',
                                 'Amount ': 'Compound Amount'})
-    data = data[['Peak_Retention_Time', 'RRT (ISTD)', 'Peak_Area_Percent', 'Area', 'Height', 'Compound',
+    try:
+        data = data[['Peak_Retention_Time', 'RRT (ISTD)', 'Peak_Area_Percent', 'Area', 'Height', 'Compound',
                  'Compound Amount', 'id', 'excel_sheet']]
+    except KeyError:
+        data = data.rename(columns={'Concentration ': 'Compound Amount'})
+        data = data[['Peak_Retention_Time', 'RRT (ISTD)', 'Peak_Area_Percent', 'Area', 'Height', 'Compound',
+                 'Compound Amount', 'id', 'excel_sheet']] 
     data['Compound Amount'].replace({'n.a.': 0}, inplace=True)
     return data
 
