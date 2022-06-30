@@ -10,20 +10,12 @@ import pandas as pd
 import base64
 #import streamlit_analytics
 
-# username = st.sidebar.text_input("User Name")
-# password = st.sidebar.text_input("Password",type='password')
-# login = st.sidebar.button('login')
-
-
-#if (username == st.secrets["DB_USERNAME"]) & (password == st.secrets["DB_PASSWORD"]):
-#if (login) & (username.lower() == 'odp_user') & (password == 'Open123$'):
-# st.sidebar.write('Welcome odp_user!')
 st.set_page_config(layout="wide")
 col1, mid, col2 = st.columns([10, 25, 3.5])
 with col1:
     st.image('supporting_docs/odp_logo.png', width=225)
 with col2:
-    st.text('Updated 02/10/22')
+    st.text('Updated 07/30/22')
 
 
 
@@ -492,6 +484,8 @@ with need_help:
 updates = st.expander('Updates 🆕')
 with updates:
     """
+    - June 30, 2022:
+        - Fixed formatting bug for Lab 4 Thermo
     - February 10, 2022:
         - Requirement set Streamlit version to 1.4.0
     - October 11, 2021:
