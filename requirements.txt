@@ -4,3 +4,4 @@ xlrd==2.0.1
 streamlit-analytics==0.2.2
 streamlit == 1.4.0 
 click==8.0.4
+numpy==1.22.4

@@ -8,7 +8,11 @@ Created on Thu Mar  4 10:38:10 2021
 import streamlit as st
 import pandas as pd
 import base64
-#import streamlit_analytics
+import numpy as np
+
+################################################################
+# Initial Layout
+################################################################
 
 st.set_page_config(layout="wide")
 col1, mid, col2 = st.columns([10, 25, 3.5])
@@ -17,7 +21,11 @@ with col1:
 with col2:
     st.text('Version 1.05')
 
+colClean, spacer1, colIFM= st.columns((10,.35,10))
 
+################################################################
+# Methods
+################################################################
 
 def get_table_download_link(df, file_name, group_by, clean='y'):
     """Generates a link allowing the data in a given panda dataframe to be downloaded
@@ -52,6 +60,43 @@ def rrt_range(rrt, range_=None, rounding_num=None):
 def average(lst):
     return sum(lst) / len(lst)
 
+def groupRRT(series, rangeValue, roundNum):
+    """
+    This method will bin RRT based on a specified range and return an updated list with its updated RRT.
+    For example if I have a range of +/- 0.05 and I have RRT values [0,1,1.01,1.02,3]
+    I will return [0,1,1,1,3] since 1,1.01,1.02 are within +/-0.05 of each other
+    Note the range is determined by the first instance within a list. So because 1 was found first, the range
+    0.95-1.05 is created rather than 0.96-1.06 for 1.01 or 0.97-1.07 for 1.02
+    If a value falls in between two ranges then assign it to the value it is most closest to
+
+    @param series - dataframe
+    @param rangeValue - value range should +/- from actual
+    @param roundNum - value to round RRT (effects binning)
+    @return updated RRT list 
+    """
+
+    lst = series['RRT (ISTD)'].tolist()  # represents list of relative retention times, make sure to round prior
+    ranges = [rrt_range(lst[0], range_=rangeValue, rounding_num=roundNum)]  # represents ranges of unique list
+    range_dict = {str(rrt_range(lst[0], range_=rangeValue, rounding_num=roundNum)): lst[0]}
+    updatedRRT = []  # represents unique list of relative retention times based on ranges, initialize with the first number
+    for i, num in enumerate(lst):
+        num = float(num)
+        if any(r[0] <= num <= r[1] for r in ranges):  # if num is within any of the ranges, add the number that corresponds to that range to new_list
+            # boolean =  [r[0] <= num <= r[1] for r in ranges] #return the index where num is in ranges
+            index = [i for i, x in enumerate([r[0] <= num <= r[1] for r in ranges]) if x]
+            if len(index) == 2:
+                rrt_0 = range_dict[str(ranges[index[0]])]
+                rrt_1 = range_dict[str(ranges[index[1]])]
+                if abs(rrt_0-num) > abs(rrt_1-num):
+                    index = [index[1]]
+                else:
+                    index = [index[0]]
+            updatedRRT.append(range_dict[str(ranges[index[0]])])
+        else:
+            ranges.append(rrt_range(num, range_=rangeValue, rounding_num=roundNum))
+            range_dict.update({str(rrt_range(num, range_=rangeValue, rounding_num=roundNum)): num})
+            updatedRRT.append(num)
+    return updatedRRT
 
 def drop_lcap(dataframe, threshold=0.2):
     # file = pd.read_csv(dataframe, dtype = object, header = 0)
@@ -190,14 +235,13 @@ def agilent(uploaded_file, sheetname, reference_chem):
                                     'Peak\nArea\nPercent': 'Peak_Area_Percent',
                                     'Peak Area\nPercent': 'Peak_Area_Percent'})
     return series
-#streamlit_analytics.start_tracking()
-colClean, spacer1, colIFM= st.columns((10,.35,10))
+
+################################################################
+# CLEAN HPLC MODULE
+################################################################
 
 colClean.title('HPLC Clean-Up')
 with colClean:
-    ################################
-    # Clean HPLC Module
-    ################################
     st.subheader('Upload Excel File(s) for Cleaning')
     files = st.file_uploader('Multiple files can be added at once', accept_multiple_files=True)
     output_name = st.text_input('Please enter the name you would like for the returned dataset: ')
@@ -286,9 +330,9 @@ with colClean:
                 # st.write(e)
             st.markdown(get_table_download_link(all_data_list, file_name=output_name, group_by = None, clean='y'), unsafe_allow_html=True)
 
-    ################################
-    # Clean FAQ
-    ################################
+################################################################
+# CLEAN HPLC MODULE FAQ
+################################################################
     clean_faq = st.expander('Clean-Module FAQ')
     with clean_faq:
         """
@@ -334,107 +378,53 @@ with colClean:
             each entry as its own excel file. 
         ***  
         """
+################################################################
+# IFM MODULE 
+################################################################
 colIFM.title('Impurity Fate Mapping')
 with colIFM:
-    ################################
-    # IFM Module
-    ################################
     st.subheader('Upload a CSV file for IFM')
     ifm_file = st.file_uploader('Only one file at a time.', accept_multiple_files=False)
     output_name_2 = st.text_input('Please enter the name you would like for the returned IFM dataset: ')
     if output_name_2 == '':
         output_name_2 = 'IFM_Data'
-    round_num = st.selectbox('How many digits would you like RRT to be rounded by?', (1, 2, 3, 4, 5), index=2)
-    r = st.selectbox('What range would you like to bucket values?', (
+    roundNum = st.selectbox('How many digits would you like RRT to be rounded by?', (1, 2, 3, 4, 5), index=2)
+    rangeValue = st.selectbox('What range would you like to bucket values?', (
     0.001, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1),
                      index=1)
     group_by = st.selectbox('Would you like to return lcap%, area, height or concentrations?',
                             ('Peak_Area_Percent', 'Area', 'Height', 'Compound Amount'), index=0)
+    dropNa = st.selectbox("Do you want to drop columns that contain all empty cells?", ("Yes","No"), index=0)
 
     if st.button('Impurity fate mapping'):
         series = pd.read_csv(ifm_file, dtype=object, header=0)
-        lst = series['RRT (ISTD)'].tolist()  # represents list of relative retention times, make sure to round prior
-        ranges = [rrt_range(lst[0], range_=r, rounding_num=round_num)]  # represents ranges of unique list
-        range_dict = {str(rrt_range(lst[0], range_=r, rounding_num=round_num)): lst[0]}
-        new_lst = []  # represents unique list of relative retention times based on ranges, initialize with the first number
-        for i, num in enumerate(lst):
-            num = float(num)
-            if any(r[0] <= num <= r[1] for r in
-                   ranges):  # if num is within any of the ranges, add the number that corresponds to that range to new_list
-                # boolean =  [r[0] <= num <= r[1] for r in ranges] #return the index where num is in ranges
-                index = [i for i, x in enumerate([r[0] <= num <= r[1] for r in ranges]) if x]
-                if len(index) == 2:
-                    if abs(num - average(ranges[index[0]])) > (abs(num - average(ranges[index[1]]))):
-                        index = [index[1]]
-                    else:
-                        index = [index[0]]
-                new_lst.append(range_dict[str(ranges[index[0]])])
-            else:
-                ranges.append(rrt_range(num, range_=r, rounding_num=round_num))
-                range_dict.update({str(rrt_range(num, range_=r, rounding_num=round_num)): num})
-                new_lst.append(num)
+        new_lst = groupRRT(series, rangeValue, roundNum)
         series['RRT (ISTD)_new'] = new_lst
-        new_set = set(new_lst)  # unique values of list + sort
-        final_dict = {}
+        series['Compound'] = series['Compound'].fillna("Unknown")
+        series = series.apply(pd.to_numeric, errors='ignore')
 
-        try:  # old version
-            subset = series.groupby(['id']).apply(lambda x: x[['RRT (ISTD)_new', 'Peak\nArea\nPercent']].values).to_dict()
-        except:
-            subset = series.groupby(['id']).apply(lambda x: x[['RRT (ISTD)_new', group_by]].values).to_dict()
-
-        for key, value in subset.items():
-            test_list = [i if i in subset[key][:, 0].tolist() else 0 for i in list(new_set)]
-            for idx2, j in enumerate(subset[key][:, 0].tolist()):
-                if subset[key][:, 0][idx2] in test_list:
-                    test_list[test_list.index(j)] = round(float(subset[key][:, 1].tolist()[idx2]), 3)
-            final_dict.update({key: test_list})
-        final_rrt_lst = [round(float(x), round_num) for x in new_set]
-
-        # Some reason, 999 is being read as a float, 999.0 so when performing:
-        # [list(set(series.loc[series['RRT (ISTD)'] == str(i)]['Compound'].tolist())) for i in new_set]
-        # str(i) for i in new_set is '999.0' and is not the same as series['RRT (ISTD)'] == '999'
-        # This is a workaround
-        if 999.0 in new_set:
-            new_set = ['999' if x == 999 else x for x in new_set]
-            # new_set = list(new_set)
-            # new_set[-1] = str(int(new_set[-1]))
-            # new_set = set(new_set)
-        rrt_to_names = [list(set(series.loc[series['RRT (ISTD)'] == str(i)]['Compound'].tolist())) for i in new_set]
-        rrt_to_names = [item for items in rrt_to_names for item in items]
-        st.subheader('Impurity Fate Mapping')
-        df = pd.DataFrame.from_dict(final_dict, orient='index', columns=final_rrt_lst, dtype=object)
-
-        # Used to add a row with column names. However running into datatype issues with multi dtypes in a single column
-        # df_names = df.append(pd.DataFrame([rrt_to_names], columns=df.columns, index=['Compound_name']).fillna('n.a.').astype(object))
-        df_names = pd.concat([pd.DataFrame([rrt_to_names], columns=df.columns, index=['Compound_name']), df]).fillna(
-            'n.a.').astype(object)
-
+        ## Sort known compounds & append unknown
+        seriesKnown = series[series['Compound']!="Unknown"]
+        seriesUnk = series[series['Compound']=="Unknown"]
+        seriesKnown = seriesKnown.pivot(index=['excel_sheet','id'], columns=['Compound','RRT (ISTD)_new'], values=group_by).sort_index(axis='columns', level='RRT (ISTD)_new')
+        seriesUnk = seriesUnk.pivot(index=['excel_sheet','id'], columns=['Compound','RRT (ISTD)_new'], values=group_by).sort_index(axis='columns', level='RRT (ISTD)_new')
+        seriesTotal = series.pivot_table(index=['excel_sheet','id'], columns=['Compound','RRT (ISTD)_new'], values=group_by, aggfunc= 'sum', margins = True, margins_name='Total').iloc[:-1, -1:]
+        seriesFinal = pd.merge(pd.merge(seriesKnown, seriesUnk, how = "outer", left_index=True,right_index=True), seriesTotal, how = "outer", left_index=True,right_index=True)
+        seriesFinal.iloc[:,:-1] = seriesFinal.iloc[:,:-1].replace(to_replace = 0, value = np.nan)
+        if dropNa =="Yes":
+            seriesFinal.dropna(axis=1, how='all', inplace = True)
+        
         try:
-            df = df.reindex(sorted(df.columns), axis=1)
-            sum = df.sum(axis=1)
-            df['Total ' + group_by] = sum
-            df_names = df_names.reindex(sorted(df_names.columns), axis=1)
-            # df_values = df_names.iloc[1:df_names.shape[0]]
-            sum_name = sum.tolist()
-            sum_name.insert(0, 0)
-            df_names['Total ' + group_by] = sum_name
-        except ValueError:
-            st.write('Error at rounding {} and range {}'.format(round_num, r))
-        if group_by == 'Compound Amount':
-            df = df.loc[:, (df != 0).any(axis=0)]
-        try:
-            st.write(df_names)
+            st.write(seriesFinal)
             st.write('IFM with compound names')
-            st.markdown(get_table_download_link(df_names, file_name=output_name_2, group_by=group_by, clean='n'), unsafe_allow_html=True)
+            st.markdown(get_table_download_link(seriesFinal, file_name=output_name_2, group_by=group_by, clean='n'), unsafe_allow_html=True)
         except:
-            st.write(
-                'There was an error displaying the data with compound names in real time. However, you can still download the IFM data with names using the link below data.')
-            st.write(df)
-            st.markdown(get_table_download_link(df_names, file_name=output_name_2, group_by=group_by, clean='n'), unsafe_allow_html=True)
+            st.write('There was an error displaying the data.')
+            st.markdown(get_table_download_link(seriesFinal, file_name=output_name_2, group_by=group_by, clean='n'), unsafe_allow_html=True)
 
-    ################################
-    # IFM FAQ
-    ################################
+################################################################
+# IFM MODULE FAQ
+################################################################
     ifm_faq = st.expander('IFM-Module FAQ')
     with ifm_faq:
         """
@@ -473,17 +463,22 @@ with colIFM:
             to the RRT within that column. If one was not present within the report, it will appear as n.a. 
          ***    
         """
-################################
-# Need Help Module
-################################
+
+################################################################
+# Need Help FAQ
+################################################################
 need_help = st.expander("Still can't find your answer? 👉")
 with need_help:
     st.markdown(
-        "If you have any trouble please refer to the common FAQ first and if you don't find your solutin please Teams message or Email " + '<a href="mailto:jsamuel@ondemandpharma.com">Jon</a>' + ' or ' + '<a href="mailto:LTruong@ondemandpharma.com ">Loan.</a>' + ' Please submit a copy of the error message and file(s) that popped the error. ',
+        "If you have any trouble please refer to the common FAQ first and if you don't find your solutin please Teams message or email Jon Samuel" + '<a href="mailto:jsamuel@ondemandpharma.com"> (email)</a>',
         unsafe_allow_html=True)
+    st.markdown("In the message body, please submit a screenshot of the error message, values entered and file(s) used.")
 updates = st.expander('Updates 🆕')
 with updates:
     """
+    - January 4, 2023:
+        - Updated IFM for easier debugging and formating utilizing pivot tables
+        - Added option to drop columns with all NaN 
     - June 30, 2022:
         - Fixed formatting bug for Lab 4 Thermo
     - February 10, 2022:
@@ -504,8 +499,3 @@ with updates:
         - Expanded on IFM output to choose between LCAP, Area, Height or Compound Amount (Concentration)
         - Included formatting for Thermo output from Lab 4 HPLC
     """
-#streamlit_analytics.stop_tracking(unsafe_password = 'BIGMEDS1!')
-# elif (username == '') | (password == ''):
-#     st.warning("Please enter a username and password")
-# else:
-#     st.warning("Incorrect Username/Password")
